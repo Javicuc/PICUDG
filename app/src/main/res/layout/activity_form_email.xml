@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".FormEmail">
+
+
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <RelativeLayout
+        android:id="@+id/sky_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/primary">
+        <!--android:background="@color/sky"-->
+
+        <FrameLayout
+            android:id="@+id/plane_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true">
+
+            <ImageView
+                android:id="@+id/plane"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/plane_margin"
+                android:rotation="180"
+                android:src="@drawable/ic_send_white_24dp" />
+        </FrameLayout>
+
+        <io.codetail.widget.RevealFrameLayout
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_centerInParent="true">
+
+            <RelativeLayout
+                android:id="@+id/sent_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded">
+
+                <ImageView
+                    android:id="@+id/check"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:padding="20dp"
+                    android:src="@drawable/ic_check_white_24dp" />
+            </RelativeLayout>
+        </io.codetail.widget.RevealFrameLayout>
+
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/inputs_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/background_light"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:gravity="center"
+
+                android:orientation="vertical">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:elevation="6dp"
+                    android:layout_gravity="center"
+                    app:srcCompat="@mipmap/udg" />
+            </LinearLayout>
+
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Centro de estudios del usuario"
+                android:gravity="center"
+                android:textColorHint="@color/colorhint"
+                android:textColor="@color/colortext"
+                android:focusable="false"
+                android:padding="16dp"
+                android:textSize="16sp"
+                android:enabled="false"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/secondary_text"
+                android:gravity="center"
+                android:focusable="false"
+                android:textSize="20sp"
+                android:layout_marginTop="16dp"
+                android:text="@string/dependencia"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Spinner
+                    android:id="@+id/spin_dpto"
+                    android:layout_height="wrap_content"
+                    android:layout_width="130dp"
+                    android:textSize="16sp"
+                    android:soundEffectsEnabled="true"
+                    android:entries="@array/Dependencia" />
+
+                <EditText
+                    android:id="@+id/til_maildpto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColorHint="@color/colorhint"
+                    android:hint="Contacto del dpto"
+                    android:textSize="14sp"
+                    android:padding="16dp"
+                    android:focusable="false"
+                    android:enabled="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/til_codigo"
+                    android:layout_width="95dp"
+                    android:layout_height="wrap_content">
+
+                    <EditText
+                        android:id="@+id/campo_codigo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:maxLength="9"
+                        android:hint="Codigo"
+                        android:textColorHint="@color/colorhint"
+                        android:textColor="@color/colortext"
+                        android:inputType="number"
+                        android:textSize="16sp"
+                        android:padding="16dp"/>
+                </android.support.design.widget.TextInputLayout>
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/til_correo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <EditText
+                        android:id="@+id/campo_correo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColorHint="@color/colorhint"
+                        android:textColor="@color/colortext"
+                        android:textSize="16sp"
+                        android:padding="16dp"
+                        android:hint="Correo@alumnos.udg.mx"
+                        android:inputType="textEmailAddress"/>
+                </android.support.design.widget.TextInputLayout>
+
+            </LinearLayout>
+            <!--> De momento no utilizaremos un campo telefonico
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/til_telefono"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/campo_telefono"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:hint="Telefono"
+                    android:inputType="phone" />
+            </android.support.design.widget.TextInputLayout>
+            -->
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/til_asunto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/campo_asunto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColorHint="@color/colorhint"
+                    android:textColor="@color/colortext"
+                    android:textSize="16sp"
+                    android:padding="16dp"
+                    android:hint="Asunto"
+                    android:inputType=""
+                    android:maxLength="30"/>
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/til_descripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/campo_descripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColorHint="@color/colorhint"
+                    android:textColor="@color/colortext"
+                    android:textSize="16sp"
+                    android:padding="16dp"
+                    android:hint="Descripción"
+                    android:inputType="textMultiLine"
+                    android:isScrollContainer="true"/>
+            </android.support.design.widget.TextInputLayout>
+        </LinearLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:soundEffectsEnabled="true"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@drawable/ic_send_white_24dp"
+            app:elevation="6dp"
+            app:pressedTranslationZ="12dp" />
+
+    </FrameLayout>
+
+
+</android.support.design.widget.CoordinatorLayout>

@@ -1,18 +1,32 @@
 <resources>
     <string name="app_name">PICUDG</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_login">Sign in</string>
+    <string name="action_settings">Configurar</string>
+    <string name="title_activity_login">Iniciar Sesion</string>
 
-    <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password (optional)</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
+
+    <string name="dependencia">Dependencia</string>
+    <string name="cont_dependencia">Contacto Dependencia</string>
+    <string name="centro_estudios">Centro de estudios</string>
+    <array name="Dependencia">
+        <item>Dpto...</item>
+        <item>Dpto.Ingenierias</item>
+        <item>Dpto.Ciencias Basicas</item>
+        <item>Dpto.Electronica y Computacion</item>
+    </array>
+    <array name="Correo_dependencia">
+        <item>Elige un Departamento</item>
+        <item>diving@cucei.udg.mx</item>
+        <item>divcb@cucei.udg.mx</item>
+        <item>divec@cucei.udg.mx</item>
+    </array>
+
+    <!-- Strings relacionados en login -->
+    <string name="prompt_email">Correo</string>
+    <string name="prompt_password">Contraseña (opcional)</string>
+    <string name="action_sign_in">Iniciar o Registrar</string>
+    <string name="action_sign_in_short">Ingresar</string>
+    <string name="error_invalid_email">Correo inválido</string>
+    <string name="error_invalid_password">Contraseña demasiado corta</string>
+    <string name="error_incorrect_password">Contraseña incorrecta</string>
+    <string name="error_field_required">Campo requerido</string>
 </resources>
