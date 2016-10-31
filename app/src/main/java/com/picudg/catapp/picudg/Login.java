@@ -52,7 +52,7 @@ public class Login extends AppCompatActivity{
         //remember = (CheckBox)findViewById(R.id.remember);
 
 
-        final Intent intent = new Intent(this, FormEmail.class);
+        final Intent intent = new Intent(this, Camara.class);
         final Intent actReg = new Intent(this, Register.class);
 
         signin.setOnClickListener(new View.OnClickListener() {
@@ -60,17 +60,17 @@ public class Login extends AppCompatActivity{
             public void onClick(View v) {
                 tilCodigo.clearFocus();
                 tilPassword.clearFocus();
-                if(validarDatos()) {
-                    startActivity(intent);
+                //if(validarDatos()) {
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    Login.this.startActivity(intent);
                     finish();
-                }
+                //}
             }
         });
         fabReg.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 startActivity(actReg);
-                finish();
             }
         });
     }

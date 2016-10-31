@@ -29,4 +29,6 @@
     <string name="error_invalid_password">Contraseña demasiado corta</string>
     <string name="error_incorrect_password">Contraseña incorrecta</string>
     <string name="error_field_required">Campo requerido</string>
+    <string name="title_activity_camara">Camara</string>
+    <string name="transicionIMG">animacion_foto</string>
 </resources>
