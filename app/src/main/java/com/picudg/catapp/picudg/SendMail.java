@@ -2,7 +2,12 @@ package com.picudg.catapp.picudg;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 import java.util.Properties;
@@ -24,17 +29,18 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.BodyPart;
 import javax.mail.internet.MimeMultipart;
 
+import static android.content.Context.CONNECTIVITY_SERVICE;
+
 /**
  * Created by javilubz on 30/10/16.
  */
 
 public class SendMail extends AsyncTask<Void, Void, Void> {
-    //Utilizamos AsyncTask porque esta clase trabajara con networking operations
+    /** Utilizamos AsyncTask porque esta clase trabajara con networking operations **/
 
     private Context context;
     private Session session;
-
-    //Information to send email
+    //Informacion del correo
     private String email;
     private String subject;
     private String message;
@@ -45,12 +51,10 @@ public class SendMail extends AsyncTask<Void, Void, Void> {
     //private ProgressDialog progressDialog;
 
     //Class Constructor
-    public SendMail(Context context, String email, String subject, String message, String pdf) {
-        //Initializing variables
+    public SendMail(Context context, String email, String subject, String pdf) {
         this.context = context;
         this.email   = email;
         this.subject = subject;
-        this.message = message;
         this.pdfname =  pdf;
     }
 

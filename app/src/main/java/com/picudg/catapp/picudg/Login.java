@@ -61,7 +61,10 @@ public class Login extends AppCompatActivity{
                 tilCodigo.clearFocus();
                 tilPassword.clearFocus();
                 //if(validarDatos()) {
+                    intent.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     Login.this.startActivity(intent);
                     finish();
                 //}

@@ -11,8 +11,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PointF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.pdf.PdfDocument;
+import android.net.ConnectivityManager;
 import android.net.MailTo;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.sip.SipAudioCall;
 import android.os.Build;
@@ -111,6 +114,7 @@ public class FormEmail extends AppCompatActivity {
     @BindView(R.id.til_descripcion) TextInputLayout tilDesc;
     @BindView(R.id.IV_Mail) ImageView IV_photo;
     @BindView(R.id.coorlayout) CoordinatorLayout RL_FormEmail;
+    byte[] imageInByte;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,27 +128,27 @@ public class FormEmail extends AppCompatActivity {
         Uri fileUri = Uri.parse(image_path);
         IV_photo.setImageURI(fileUri);
 
+        BitmapDrawable drawable = (BitmapDrawable) IV_photo.getDrawable();
+        Bitmap bitmap = drawable.getBitmap();
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        imageInByte = stream.toByteArray();
+
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(validarDatos()){
-                    WritePDF();
-                    if(enviarmail()) {
-                        final Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                Intent actCam = new Intent(FormEmail.this, Camara.class);
-                                actCam.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                                actCam.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                actCam.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                actCam.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(actCam);
-                            }
-                        }, 3000);
+                    if (isNetDisponible() && isOnlineNet()) {
+                        WritePDF();
+                        send();
+                        startCamara();
+                    }else{
+                        Snackbar snackbar = Snackbar.make(RL_FormEmail, "¡Verifica tu conexion a internet!", Snackbar.LENGTH_LONG);
+                        snackbar.show();
+                        startCamara();
                     }
                 }else{
-                    Snackbar snackbar = Snackbar.make(RL_FormEmail, "Error al enviar", Snackbar.LENGTH_LONG);
+                    Snackbar snackbar = Snackbar.make(RL_FormEmail, "Datos inconclusos", Snackbar.LENGTH_LONG);
                     snackbar.show();
                 }
             }
@@ -162,7 +166,21 @@ public class FormEmail extends AppCompatActivity {
 
         });
     }
-    /*** Send something.*/
+    public void startCamara(){
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent actCam = new Intent(FormEmail.this, Camara.class);
+                actCam.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                actCam.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                actCam.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                actCam.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(actCam);
+            }
+        }, 3000);
+    }
+    /*** Adjuntamos el metodo enviar email.*/
     @OnClick(R.id.fab)
     void send() {
         // - Prepare views visibility.
@@ -187,25 +205,21 @@ public class FormEmail extends AppCompatActivity {
                 flyAway();
             }
         });
+        enviarmail();
         circularReveal.start();
     }
 
-    private boolean enviarmail() {
+    private void enviarmail() {
 
-        //Obtenemos el contenido del correo
+        /** Obtenemos el contenido del correo **/
         String asunto = tilAsunto.getEditText().getText().toString().trim();
-        String desc   = tilDesc.getEditText().getText().toString().trim();
-        String cc     = tilCorreo.getEditText().getText().toString().trim();
-        String remi   = tilMaildpto.getText().toString();
+        String cc = tilCorreo.getEditText().getText().toString().trim();
+        String dest = tilMaildpto.getText().toString();
 
         //Creamos el objecto SendMail
-        SendMail sm = new SendMail(this, "javier.jalr7@gmail.com", asunto, desc, pdfname);
-
+        SendMail sm = new SendMail(this, "javier.jalr7@gmail.com", asunto, pdfname);
         //llamamos a ejecutar el proceso que envia el correo
         sm.execute();
-
-        return true;
-
     }
 
     /*** Comienza la animacion de volar.*/
@@ -317,7 +331,6 @@ public class FormEmail extends AppCompatActivity {
         return  true;
     }
     private boolean validarDatos() {
-        //String telefono = tilTelefono.getEditText().getText().toString();
         String codigo   = tilCodigo.getEditText().getText().toString();
         String correo   = tilCorreo.getEditText().getText().toString();
         String depend   = spinDpto.getSelectedItem().toString();
@@ -332,7 +345,6 @@ public class FormEmail extends AppCompatActivity {
         boolean e = esDescValido(desc);
 
         if (a && c && d && e) {
-            send();
             return true;
         }
         return false;
@@ -395,16 +407,15 @@ public class FormEmail extends AppCompatActivity {
 
                 /** Ubicacion del problema y detalles **/
                 Paragraph pdet = new Paragraph();
-                pdet.add(new Phrase("Centro Uniersitario de Ciencias Exactas e Ingenierias (CUCEI)."));
+                pdet.add(new Phrase("Centro Uniersitario de Ciencias Exactas e Ingenierias (CUCEI).",fontContenido));
                 pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase("Blvd. Marcelino García Barragán 1421, Ciudad Universitaria, 44430 Guadalajara, JAL."));
+                pdet.add(new Phrase("Blvd. Marcelino García Barragán 1421, Ciudad Universitaria, 44430 Guadalajara, JAL.",fontContenido));
                 pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase("Departamento de Ciencias Basicas, Jorge Zamudio Hernandez."));
+                pdet.add(new Phrase("Departamento de Ciencias Basicas, Jorge Zamudio Hernandez.",fontContenido));
                 pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase(date.toString()+", DEDX-A015"));
+                pdet.add(new Phrase(date.toString()+", DEDX-A015",fontContenido));
                 pdet.add(new Phrase(Chunk.NEWLINE));
                 pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.setFont(fontContenido);
                 New_Document.add(pdet);
 
                 /** Agregamos la descripcion del usuario **/
@@ -435,14 +446,11 @@ public class FormEmail extends AppCompatActivity {
                 New_Document.add(p2);
 
                 /** Obtenemos la imagen que capturamos en el intent **/
-                ByteArrayOutputStream streamImage = new ByteArrayOutputStream();
-                InputStream image_stream = getContentResolver().openInputStream(Uri.parse(image_path));
-                Bitmap bitmap = BitmapFactory.decodeStream(image_stream);
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100 , streamImage);
+
                 Image userImage = null;
                 try {
-                    userImage = Image.getInstance(streamImage.toByteArray());
-                }catch (IOException e) {
+                    userImage = Image.getInstance(imageInByte);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                 /** Cambiamos el tamaño de la imagen, para que se adapte al documento **/
@@ -453,11 +461,6 @@ public class FormEmail extends AppCompatActivity {
                 /**Agregamos la imagen que capturo el usuario(intent) al documento **/
                 New_Document.add(userImage);
                 New_Document.close();
-
-                /** Mandamos un mensaje de exito
-                Snackbar snackbar = Snackbar
-                        .make(RL_FormEmail, "Reporte creado", Snackbar.LENGTH_LONG);
-                snackbar.show(); **/
 
             } catch (DocumentException e) {
                 e.printStackTrace();
@@ -487,7 +490,8 @@ public class FormEmail extends AppCompatActivity {
     private void alertMsg(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.ic_picture_as_pdf_black_24dp);
-        builder.setTitle("¿Estas Seguro?, El reporte no sera enviado");
+        builder.setTitle("¿Estas Seguro?");
+        builder.setMessage("El reporte no sera enviado");
         builder.setPositiveButton("Si", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -511,10 +515,43 @@ public class FormEmail extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
+
+
     @Override
-    public void onBackPressed()
-    {
+    public void onBackPressed() {
         alertMsg();
         //super.onBackPressed();  // Invoca al método
+    }
+    private void alertConect(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setIcon(R.drawable.);
+        builder.setTitle("ATENCIÓN");
+        builder.setMessage("¡Verifica tu conexion a internet!");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
+    }
+    private boolean isNetDisponible() {
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo actNetInfo = connectivityManager.getActiveNetworkInfo();
+        return (actNetInfo != null && actNetInfo.isConnected());
+    }
+    public Boolean isOnlineNet() {
+        try {
+            Process p = java.lang.Runtime.getRuntime().exec("ping -c 1 www.google.mx");
+
+            int val           = p.waitFor();
+            boolean reachable = (val == 0);
+            return reachable;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
