@@ -1,9 +1,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.picudg.catapp.picudg.MainActivity" >
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
+    tools:context="com.picudg.catapp.picudg.FormEmail">
+    <item
+        android:id="@+id/makePDF_MenuMain"
+        android:orderInCategory="100"
+        android:title="Crear Reporte"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/ayuda_MenuMain"
+        android:title="Ayuda"
         android:orderInCategory="100"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/delete_MenuMain"
+        android:icon="@drawable/ic_delete_forever_white_24dp"
+        android:showAsAction="always"
+        android:title="Eliminar" />
 </menu>

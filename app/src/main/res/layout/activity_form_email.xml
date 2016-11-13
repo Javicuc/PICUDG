@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/coorlayout"
@@ -7,6 +8,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:context=".FormEmail">
+
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -18,7 +20,9 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            app:navigationIcon="?attr/homeAsUpIndicator"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
     </android.support.design.widget.AppBarLayout>
 
@@ -72,167 +76,126 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/background_light"
-        android:paddingBottom="@dimen/activity_vertical_margin"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
+            android:id="@+id/LinearLayout0"
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:layout_marginRight="12dp"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true">
 
             <LinearLayout
+                android:id="@+id/LinearLayout1"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:layout_height="match_parent"
+                android:layout_weight="3.8"
+                android:paddingTop="8dp"
+                android:elevation="12dp"
+                android:layout_gravity="center_horizontal"
+                android:orientation="horizontal">
 
                 <ImageView
-                    android:id="@+id/IV_Mail"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:elevation="6dp"
-                    android:layout_gravity="center"
-                    android:transitionName="@string/transicionIMG"/>
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Centro de Estudios del Usuario"
-                android:gravity="center"
-                android:textColor="@color/colortext"
-                android:textColorHint="@color/colorhint"
-                android:focusable="false"
-                android:padding="16dp"
-                android:textSize="12sp"
-                android:enabled="false"/>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/secondary_text"
-                android:gravity="center"
-                android:focusable="false"
-                android:textSize="20sp"
-                android:layout_marginTop="16dp"
-                android:text="@string/dependencia"/>
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Spinner
-                    android:id="@+id/spin_dpto"
-                    android:layout_height="wrap_content"
-                    android:layout_width="130dp"
-                    android:textSize="16sp"
-                    android:soundEffectsEnabled="true"
-                    android:entries="@array/Dependencia" />
-
-                <EditText
-                    android:id="@+id/til_maildpto"
+                    android:id="@+id/IV_Form_img"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColorHint="@color/colorhint"
-                    android:hint="Contacto del dpto"
-                    android:textSize="14sp"
-                    android:padding="16dp"
-                    android:focusable="false"
-                    android:enabled="false"/>
+                    android:visibility="gone"
+                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"/>
+                <!--
+                android:scaleType="centerInside"
+                android:adjustViewBounds="true"
+                -->
+
+                <android.support.v7.widget.AppCompatImageButton
+                    android:id="@+id/BT_cam"
+                    android:elevation="12dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/primary"
+                    app:srcCompat="@drawable/ic_add_a_photo_white_48dp"/>
+
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:elevation="12dp"
+                android:layout_gravity="center_horizontal"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
                 android:orientation="horizontal">
-                <android.support.design.widget.TextInputLayout
-                    android:id="@+id/til_codigo"
-                    android:layout_width="95dp"
-                    android:layout_height="wrap_content">
 
-                    <EditText
-                        android:id="@+id/campo_codigo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:maxLength="9"
-                        android:hint="Codigo"
-                        android:textColorHint="@color/colorhint"
-                        android:textColor="@color/colortext"
-                        android:inputType="number"
-                        android:textSize="16sp"
-                        android:padding="16dp"/>
-                </android.support.design.widget.TextInputLayout>
-
-                <android.support.design.widget.TextInputLayout
-                    android:id="@+id/til_correo"
+                <Button
+                    android:id="@+id/BT_Limpiar"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:elevation="3dp"
+                    android:textColor="@color/colortext"
+                    android:background="@color/primary_light"
+                    android:text="Limpiar"/>
 
-                    <EditText
-                        android:id="@+id/campo_correo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColorHint="@color/colorhint"
-                        android:textColor="@color/colortext"
-                        android:textSize="16sp"
-                        android:padding="16dp"
-                        android:hint="Correo@alumnos.udg.mx"
-                        android:inputType="textEmailAddress"/>
-                </android.support.design.widget.TextInputLayout>
+                <Button
+                    android:id="@+id/BT_Editar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:textColor="@color/colortext"
+                    android:elevation="3dp"
+                    android:background="@color/primary_light"
+                    android:text="Editar"/>
+
+                <ToggleButton
+                    android:id="@+id/TB_MakePDF"
+                    android:textOff="Crear PDF"
+                    android:textOn="Generado"
+                    android:textColor="@color/colortext"
+                    android:elevation="3dp"
+                    android:layout_margin="5dp"
+                    android:background="@color/primary_light"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
 
             </LinearLayout>
 
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/til_asunto"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:layout_weight="3">
 
-                <EditText
-                    android:id="@+id/campo_asunto"
+                <fragment
+                    android:id="@+id/mapForm"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColorHint="@color/colorhint"
-                    android:textColor="@color/colortext"
-                    android:textSize="16sp"
-                    android:padding="16dp"
-                    android:hint="Asunto"
-                    android:inputType="textEmailSubject"
-                    android:maxLength="30"/>
-            </android.support.design.widget.TextInputLayout>
-
-            <android.support.design.widget.TextInputLayout
-                android:id="@+id/til_descripcion"
+                    android:layout_margin="@dimen/activity_horizontal_margin"
+                    android:layout_height="match_parent"/>
+            </LinearLayout>
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:layout_weight="4.8">
 
-                <EditText
-                    android:id="@+id/campo_descripcion"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColorHint="@color/colorhint"
-                    android:textColor="@color/colortext"
-                    android:textSize="16sp"
-                    android:padding="16dp"
-                    android:hint="Descripción"
-                    android:inputType="textMultiLine"
-                    android:isScrollContainer="true"/>
-            </android.support.design.widget.TextInputLayout>
+            </LinearLayout>
         </LinearLayout>
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:soundEffectsEnabled="true"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="@dimen/fab_margin"
-            android:src="@drawable/ic_send_white_24dp"
-            app:elevation="6dp"
-            app:pressedTranslationZ="12dp" />
-
     </FrameLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:soundEffectsEnabled="true"
+        android:src="@drawable/ic_send_white_24dp"
+        app:elevation="6dp"
+        app:pressedTranslationZ="12dp" />
+
 </android.support.design.widget.CoordinatorLayout>

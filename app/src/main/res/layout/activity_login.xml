@@ -24,23 +24,33 @@
             app:srcCompat="@drawable/add" />
     </FrameLayout>
 
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
     <LinearLayout
-        android:layout_above="@+id/linear3"
         android:id="@+id/linear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_above="@+id/linear3"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/head"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:text="Iniciar Sesión"
             android:textColor="@color/secondary_text"
-            android:textSize="26sp"
-            android:gravity="center" />
+            android:textSize="29dp" />
+
         <android.support.design.widget.TextInputLayout
-            android:id="@+id/codigo"
+            android:id="@+id/TIL_correoLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColorHint="@color/colorhint"
@@ -48,95 +58,161 @@
             android:layout_marginRight="46dp"
             android:textColor="@color/colortext">
 
-            <EditText
+            <AutoCompleteTextView
+                android:id="@+id/ACT_correoLogin"
                 android:textSize="16sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Codigo"
+                android:hint="Correo"
                 android:textColorHint="@color/colorhint"
                 android:textColor="@color/colortext"
                 android:padding="16dp"
-                android:maxLength="9"
-                android:inputType="number"
-                android:drawableLeft="@drawable/userb"
+                android:inputType="textEmailAddress"
+                android:drawableStart="@drawable/mailb"
                 android:drawablePadding="12dp" />
+
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
-            android:id="@+id/password"
+            android:id="@+id/TIL_passwordLogin"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColorHint="@color/colorhint"
-            android:layout_marginLeft="46dp"
-            android:layout_marginRight="46dp"
-            android:textColor="@color/colortext">
+            android:layout_height="wrap_content">
+
             <EditText
-                android:textSize="16sp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="46dp"
+                android:layout_marginRight="46dp"
+                android:drawableStart="@drawable/lock"
+                android:drawablePadding="12dp"
                 android:hint="Contraseña"
-                android:textColorHint="@color/colorhint"
-                android:textColor="@color/colortext"
-                android:padding="16dp"
                 android:inputType="textPassword"
-                android:drawableLeft="@drawable/lock"
-                android:drawablePadding="12dp" />
+                android:padding="16dp"
+                android:textColor="@color/colortext"
+                android:textColorHint="@color/colorhint"
+                android:textSize="16dp" />
+
         </android.support.design.widget.TextInputLayout>
 
         <LinearLayout
-            android:layout_marginTop="12dp"
             android:id="@+id/linear4"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
+
             <CheckBox
-                android:layout_weight="2"
                 android:id="@+id/remember"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Recordar"
-                android:checked="false"
-                android:buttonTint="@color/colorhint"
-                android:textColor="@color/colorhint"
                 android:layout_marginLeft="60dp"
-                android:textSize="11sp" />
+                android:layout_weight="2"
+                android:buttonTint="@color/colorhint"
+                android:checked="false"
+                android:text="Recordar"
+                android:textColor="@drawable/tab_colore"
+                android:textSize="11dp" />
 
             <TextView
-                android:layout_weight="2.3"
                 android:id="@+id/forgotpass"
                 android:layout_width="0dp"
+                android:textColorLink="@color/accent"
                 android:layout_height="wrap_content"
-                android:text="Olvidaste la contraseña?"
-                android:textColor="@color/colorhint"
                 android:layout_gravity="center"
-                android:textSize="11sp" />
-
+                android:layout_weight="2.3"
+                android:text="¿Contraseña Olvidada?"
+                android:textColor="@drawable/tab_colore"
+                android:textSize="11dp" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/signin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rect1"
-            android:text="Ingresar"
-            android:textSize="16dp"
-            android:textColor="@color/icons"
-            android:gravity="center"
+            android:layout_marginBottom="11dp"
             android:layout_marginLeft="60dp"
             android:layout_marginRight="60dp"
-            android:padding="12dp"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="11dp"
-            android:elevation="3dp" />
+            android:background="@drawable/rect1"
+            android:elevation="3dp"
+            android:gravity="center"
+            android:padding="12dp"
+            android:text="Ingresar"
+            android:textColor="#ffff"
+            android:textSize="16dp" />
 
-    </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/linear3"
-            android:layout_alignParentBottom="true"
+        <TextView
+            android:id="@+id/or"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_above="@+id/acc"
+            android:layout_marginBottom="5dp"
+            android:gravity="center"
+            android:lines="1"
+            android:text="Iniciar sesión con"
+            android:textColor="@drawable/tab_colore" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linear3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="3dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_weight="1"
+            android:background="@drawable/rectfb"
+            android:orientation="horizontal">
+
+            <com.facebook.login.widget.LoginButton
+                android:id="@+id/LoginFacebook"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/bt_Facebook"
+                android:background="@android:color/transparent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:soundEffectsEnabled="true"
+                android:text="Facebook"
+                android:textColor="#ffff" />
+
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_weight="1"
+            android:background="@drawable/rectgoogle"
+            android:orientation="horizontal">
+
+            <com.google.android.gms.common.SignInButton
+                android:id="@+id/LoginGoogle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/google"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:soundEffectsEnabled="true"
+                android:background="@android:color/transparent"
+                android:text="Google"
+                android:textColor="#ffff" />
+        </LinearLayout>
+    </LinearLayout>
 </RelativeLayout>

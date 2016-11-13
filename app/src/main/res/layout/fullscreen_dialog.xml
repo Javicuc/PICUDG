@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FormEmail">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/activity_vertical_margin">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="@dimen/activity_horizontal_margin"
+            android:orientation="vertical"
+            android:weightSum="4">
+
+            <ImageView
+                android:id="@+id/iv_Main_Img"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:elevation="14dp"
+                android:paddingTop="22dp"
+                android:paddingBottom="22dp"
+                app:srcCompat="@mipmap/udg" />
+
+
+
+            <TextView
+                android:id="@+id/info_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:text="@string/reporte_top"
+                android:textColor="@color/secondary_text" />
+
+            <View
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:layout_below="@+id/info_text"
+                android:background="@color/primary_dark" />
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/TIL_asunto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp">
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Asunto"
+                    android:maxLines="1"
+                    android:padding="16dp"
+                    android:textColor="@color/colortext"
+                    android:textColorHint="@color/colorhint"
+                    android:textSize="22sp" />
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/TIL_descripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp">
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Descripción:"
+                    android:padding="16dp"
+                    android:inputType="textMultiLine"
+                    android:textColor="@color/colortext"
+                    android:textColorHint="@color/colorhint"
+                    android:textSize="16sp" />
+            </android.support.design.widget.TextInputLayout>
+            <Button
+                android:id="@+id/BT_reporteDialog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/primary"
+                android:layout_marginTop="45dp"
+                android:text="OK"
+                android:textSize="24sp"
+                android:textColor="#ffff"/>
+        </LinearLayout>
+    </RelativeLayout>
+</ScrollView>

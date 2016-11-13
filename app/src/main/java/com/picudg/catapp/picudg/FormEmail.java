@@ -1,41 +1,45 @@
 package com.picudg.catapp.picudg;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.pdf.PdfDocument;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.media.MediaScannerConnection;
 import android.net.ConnectivityManager;
-import android.net.MailTo;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.sip.SipAudioCall;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.StrictMode;
+import android.os.PersistableBundle;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
+import android.support.v7.app.AppCompatDialogFragment;
 import android.support.v7.widget.Toolbar;
 import android.transition.Explode;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -43,60 +47,38 @@ import android.view.animation.Animation;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
-import android.widget.AdapterView;
-import android.widget.EditText;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.Toast;
-
-import com.itextpdf.text.BaseColor;
-import com.itextpdf.text.Chunk;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.PdfPHeaderCell;
-import com.itextpdf.text.pdf.PdfWriter;
+import android.widget.ToggleButton;
+import com.bumptech.glide.Glide;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.vision.text.Text;
 import com.jaouan.revealator.Revealator;
 import com.jaouan.revealator.animations.AnimationListenerAdapter;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
-import java.util.Properties;
-import java.util.regex.Matcher;
+import java.util.List;
 import java.util.regex.Pattern;
-
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.CAMERA;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
-public class FormEmail extends AppCompatActivity {
-
-    /*** Paths que uyilizamos en el proceso de la activity ***/
-    private static String APP_DIRECTORY = "picudg/";
-    private static String MEDIA_DIRECTORY = APP_DIRECTORY + "files";
-    private String mPath;
-    private String image_path;
-    private String pdfname;
+public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
     /*** Inyecciones, utilizando ButterKnife ***/
     @BindView(R.id.fab) View mFab;
@@ -106,54 +88,200 @@ public class FormEmail extends AppCompatActivity {
     @BindView(R.id.sky_layout) View mSkyLayout;
     @BindView(R.id.sent_layout) View mSentLayout;
     @BindView(R.id.check) View mCheckImageView;
-    @BindView(R.id.til_codigo) TextInputLayout tilCodigo;
-    @BindView(R.id.til_correo) TextInputLayout tilCorreo;
-    @BindView(R.id.til_maildpto) EditText tilMaildpto;
-    @BindView(R.id.spin_dpto) Spinner spinDpto;
-    @BindView(R.id.til_asunto) TextInputLayout tilAsunto;
-    @BindView(R.id.til_descripcion) TextInputLayout tilDesc;
-    @BindView(R.id.IV_Mail) ImageView IV_photo;
+    @BindView(R.id.IV_Form_img) ImageView IV_photo;
     @BindView(R.id.coorlayout) CoordinatorLayout RL_FormEmail;
-    byte[] imageInByte;
+    @BindView(R.id.BT_cam) ImageButton BT_photo;
+    @BindView(R.id.BT_Limpiar) Button bt_Limpiar;
+    @BindView(R.id.TB_MakePDF) ToggleButton tb_MakePDF;
+
+
+    private static String APP_DIRECTORY = "picudg/";
+    private static String MEDIA_DIRECTORY_FILES = APP_DIRECTORY + "files";
+    private static String MEDIA_DIRECTORY = APP_DIRECTORY + "Images";
+
+    private String pdfname;
+    private String asunto;
+    private String descripcion;
+
+    private final int MY_PERMISISONS = 100;
+    private final int PHOTO_CODE = 200;
+    private final int SELECT_PICTURE = 300;
+    private final int LOCATION_CODE = 400;
+
+    private String mPathPdf;
+    private String mPath;
+    private Uri pathuri;
+    boolean takepic;
+    boolean reporteListo;
+    private GoogleMap mMap;
+    private LatLng mLatLongActual;
+    private Marker marcador;
+    private CameraUpdate cuceiPos;
+    private Polygon poligonoCucei;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_form_email);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(null);
+        //setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         ButterKnife.bind(this);
 
-        final Intent intent = getIntent();
-        image_path = intent.getStringExtra("imagePath");
-        Uri fileUri = Uri.parse(image_path);
-        IV_photo.setImageURI(fileUri);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent actMain = new Intent(FormEmail.this, PicMain.class);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(actMain);
+                FormEmail.this.finish();
+            }
+        });
 
-        BitmapDrawable drawable = (BitmapDrawable) IV_photo.getDrawable();
-        Bitmap bitmap = drawable.getBitmap();
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        imageInByte = stream.toByteArray();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapForm);
+        mapFragment.getMapAsync(this);
+
+        reporteListo = false;
+
+        /** Animacion solo disponible para dispositivos 5.0 en adelante **/
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Explode explode = new Explode();
+            explode.setDuration(2000);
+            getWindow().setEnterTransition(explode);
+            getWindow().setReturnTransition(explode);
+        }
+
+        if (myRequestPermission()) {
+            BT_photo.setEnabled(true);
+        } else {
+            BT_photo.setEnabled(false);
+        }
+
+        /** Opciones de captura de imagen: Galeria ó Camara **/
+        BT_photo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showOptions();
+            }
+        });
+
+        tb_MakePDF.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked && IV_photo.getDrawable() != null) {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
+
+                    LayoutInflater inflater = FormEmail.this.getLayoutInflater();
+
+                    View v = inflater.inflate(R.layout.fullscreen_dialog, null);
+                    builder.setView(v);
+
+                    Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
+                    final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
+                    final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
+                    final AlertDialog dialog = builder.create();
+
+                    okReporte.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            asunto      = tilAsunto.getEditText().getText().toString().trim();
+                            descripcion = tilDescripcion.getEditText().getText().toString().trim();
+
+                            if (validaCampos(asunto) && validaCampos(descripcion)){
+                                WritePDF();
+                                tb_MakePDF.setChecked(false);
+                                tb_MakePDF.setClickable(false);
+                                reporteListo = true;
+                                dialog.dismiss();
+                            }else{
+                                Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                    dialog.show();
+                }else {
+                    Snackbar snackbar = Snackbar
+                            .make(RL_FormEmail, "¡Toma una Pic!", Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                    tb_MakePDF.setClickable(true);
+                    tb_MakePDF.setChecked(false);
+                }
+            }
+        });
+        bt_Limpiar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                retoreInputsLayout();
+                if (marcador != null) {
+                    marcador.remove();
+                }
+                mMap.animateCamera(cuceiPos);
+            }
+        });
 
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(validarDatos()){
+                if(reporteListo) {
                     if (isNetDisponible() && isOnlineNet()) {
-                        WritePDF();
+                        enviarmail();
                         send();
-                        startCamara();
-                    }else{
-                        Snackbar snackbar = Snackbar.make(RL_FormEmail, "¡Verifica tu conexion a internet!", Snackbar.LENGTH_LONG);
-                        snackbar.show();
-                        startCamara();
+                        startMain();
+                    } else {
+                        alertConect();
+                        startMain();
                     }
                 }else{
-                    Snackbar snackbar = Snackbar.make(RL_FormEmail, "Datos inconclusos", Snackbar.LENGTH_LONG);
-                    snackbar.show();
+                    if (IV_photo.getDrawable() != null) {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
+
+                        LayoutInflater inflater = FormEmail.this.getLayoutInflater();
+
+                        View v = inflater.inflate(R.layout.fullscreen_dialog, null);
+                        builder.setView(v);
+
+                        Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
+                        final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
+                        final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
+                        final AlertDialog dialog = builder.create();
+
+                        okReporte.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                                asunto      = tilAsunto.getEditText().getText().toString().trim();
+                                descripcion = tilDescripcion.getEditText().getText().toString().trim();
+
+                                if (validaCampos(asunto) && validaCampos(descripcion)){
+                                    WritePDF();
+                                    tb_MakePDF.setChecked(false);
+                                    tb_MakePDF.setClickable(false);
+                                    reporteListo = true;
+                                    dialog.dismiss();
+                                }else{
+                                    Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                        dialog.show();
+                    }else {
+                        Snackbar snackbar = Snackbar
+                                .make(RL_FormEmail, "¡Toma una Pic!", Snackbar.LENGTH_LONG);
+                        snackbar.show();
+                        tb_MakePDF.setClickable(true);
+                        tb_MakePDF.setChecked(false);
+                    }
                 }
             }
         });
-        spinDpto.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+        /*spinDpto.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 String [] Mails = getResources().getStringArray(R.array.Correo_dependencia);
@@ -164,21 +292,70 @@ public class FormEmail extends AppCompatActivity {
 
             }
 
-        });
+        });*/
     }
-    public void startCamara(){
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.setMyLocationEnabled(myRequestGPSPermission());
+        // Agregando un market al mapa
+        LatLng mLatLngCucei = new LatLng(20.653910, -103.325807);
+        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias"));
+        cuceiPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
+        mMap.animateCamera(cuceiPos);
+        final PolygonOptions PolyCucei = new PolygonOptions()
+                .add(new LatLng(20.655883, -103.327721))
+                .add(new LatLng(20.656397, -103.326595))
+                .add(new LatLng(20.656987, -103.326632))
+                .add(new LatLng(20.656939, -103.327376))
+                .add(new LatLng(20.657037, -103.327385))
+                .add(new LatLng(20.657027, -103.327535))
+                .add(new LatLng(20.657616, -103.327666))
+                .add(new LatLng(20.657806, -103.327261))
+                .add(new LatLng(20.659329, -103.327352))
+                .add(new LatLng(20.659757, -103.327018))
+                .add(new LatLng(20.659354, -103.326466))
+                .add(new LatLng(20.658399, -103.326397))
+                .add(new LatLng(20.658384, -103.325929))
+                .add(new LatLng(20.658169, -103.325909))
+                .add(new LatLng(20.658278, -103.324515))
+                .add(new LatLng(20.659792, -103.324616))
+                .add(new LatLng(20.659559, -103.324180))
+                .add(new LatLng(20.656062, -103.323984))
+                .add(new LatLng(20.655633, -103.324711))
+                .add(new LatLng(20.654013, -103.324238))
+                .add(new LatLng(20.653345, -103.325795))
+                .add(new LatLng(20.655883, -103.327721))
+                .strokeColor(0xE6CCFFFF)
+                .fillColor(0x7FCCFFFF);
+        poligonoCucei = mMap.addPolygon(PolyCucei);
+
+        myUbication();
+
+        if (pointInPolygon(mLatLongActual, poligonoCucei)) {
+            Snackbar snackbar = Snackbar
+                    .make(RL_FormEmail, "!Bienvenido Buitre!", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        } else {
+            Snackbar snackbar = Snackbar
+                    .make(RL_FormEmail, "!No estas dentro de un centro de estudio!", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+    }
+    public void startMain(){
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent actCam = new Intent(FormEmail.this, Camara.class);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(actCam);
+                Intent actMain = new Intent(FormEmail.this, PicMain.class);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(actMain);
             }
         }, 3000);
+        FormEmail.this.finish();
     }
     /*** Adjuntamos el metodo enviar email.*/
     @OnClick(R.id.fab)
@@ -205,23 +382,15 @@ public class FormEmail extends AppCompatActivity {
                 flyAway();
             }
         });
-        enviarmail();
         circularReveal.start();
     }
-
     private void enviarmail() {
-
         /** Obtenemos el contenido del correo **/
-        String asunto = tilAsunto.getEditText().getText().toString().trim();
-        String cc = tilCorreo.getEditText().getText().toString().trim();
-        String dest = tilMaildpto.getText().toString();
-
         //Creamos el objecto SendMail
         SendMail sm = new SendMail(this, "javier.jalr7@gmail.com", asunto, pdfname);
         //llamamos a ejecutar el proceso que envia el correo
         sm.execute();
     }
-
     /*** Comienza la animacion de volar.*/
     private void flyAway() {
         // - Combine rotation and translation animations.
@@ -258,99 +427,33 @@ public class FormEmail extends AppCompatActivity {
                     }
                 }).start();
     }
-
     /**Inicializamos nuestros componentes.*/
     private void retoreInputsLayout() {
         mInputsLayout.postDelayed(new Runnable() {
             @Override
             public void run() {
-
-                final Animator circularReveal = ViewAnimationUtils.createCircularReveal(mInputsLayout, (int) (mFab.getX() + mFab.getWidth() / 2), (int) (mFab.getY() + mFab.getHeight() / 2), 0, mInputsLayout.getHeight());
+                final Animator circularReveal = ViewAnimationUtils.createCircularReveal(mInputsLayout,
+                        (int) (mFab.getX() + mFab.getWidth() / 2),
+                        (int) (mFab.getY() + mFab.getHeight() / 2), 0, mInputsLayout.getHeight());
                 circularReveal.setDuration(250);
                 circularReveal.start();
-
                 mInputsLayout.setVisibility(View.VISIBLE);
-                tilCodigo.getEditText().setText("");
-                tilCorreo.getEditText().setText("");
-                tilDesc.getEditText().setText("");
-                tilAsunto.getEditText().setText("");
                 IV_photo.setImageResource(0);
-                spinDpto.setSelection(0);
+                IV_photo.setVisibility(View.GONE);
+                tb_MakePDF.setClickable(true);
+                tb_MakePDF.setChecked(false);
             }
         }, 1000);
     }
-    private boolean esCodigoValido(String codigo) {
-        Pattern patron = Pattern.compile("^[0-9]*");
-        if (!patron.matcher(codigo).matches() || (codigo.length() != 9)) {
-            tilCodigo.setError("Codigo inválido");
+    private boolean validaCampos(String texto){
+        Pattern patron = Pattern.compile("[a-zA-ZñÑáéíóúÁÉÍÓÚ0-9\\s,_.-;:+!¡¿?'()]*$");
+        if(!patron.matcher(texto).matches() || texto.length() == 0 || texto.trim().equals("")){
             return false;
-        } else {
-            tilCodigo.setError(null);
         }
         return true;
-    }
-    private boolean esCorreoValido(String correo) {
-        Pattern patron = Pattern.compile("^[A-Za-z0-9+.]+@alumnos.udg.mx$");
-        if (!patron.matcher(correo).matches()) {
-            tilCorreo.setError("Correo electrónico inválido");
-            return false;
-        } else {
-            tilCorreo.setError(null);
-        }
-
-        return true;
-    }
-    private boolean esDptoValido(String dpto,int pos) {
-        if (dpto.equals("Dpto...")) {
-            Toast.makeText(this, "Departamento inválido", Toast.LENGTH_LONG).show();
-            return false;
-        }else {
-            String [] Mails = getResources().getStringArray(R.array.Correo_dependencia);
-            tilMaildpto.setText(Mails[pos]);
-        }
-        return true;
-    }
-    private boolean esAsuntoValido(String asunto){
-        Pattern patron = Pattern.compile("[a-zA-ZñÑáéíóúÁÉÍÓÚ0-9\\s,_.-:+!¡¿?'()]*$");
-        if(!patron.matcher(asunto).matches() || asunto.length() == 0 || asunto.trim().equals("")){
-            tilAsunto.setError("Asunto inválido");
-            return false;
-        }else {
-            tilAsunto.setError(null);
-        }
-        return true;
-    }
-    private boolean esDescValido(String desc){
-        Pattern patron = Pattern.compile("[a-zA-ZñÑáéíóúÁÉÍÓÚ0-9\\s,_.-:+!¡¿?()']*$");
-        if(!patron.matcher(desc).matches() || desc.length() == 0 || desc.trim().equals("")){
-            tilDesc.setError("Descripción no valida");
-            return false;
-        }else {
-            tilDesc.setError(null);
-        }
-        return  true;
-    }
-    private boolean validarDatos() {
-        String codigo   = tilCodigo.getEditText().getText().toString();
-        String correo   = tilCorreo.getEditText().getText().toString();
-        String depend   = spinDpto.getSelectedItem().toString();
-        String asunto   = tilAsunto.getEditText().getText().toString();
-        String desc     = tilDesc.getEditText().getText().toString();
-        int pos         = spinDpto.getSelectedItemPosition();
-
-        boolean a = esCodigoValido(codigo);
-        //boolean b = esCorreoValido(correo);
-        boolean c = esDptoValido(depend,pos);
-        boolean d = esAsuntoValido(asunto);
-        boolean e = esDescValido(desc);
-
-        if (a && c && d && e) {
-            return true;
-        }
-        return false;
     }
     private void WritePDF(){
-        File file = new File(Environment.getExternalStorageDirectory(), MEDIA_DIRECTORY);
+        File file = new File(Environment.getExternalStorageDirectory(), MEDIA_DIRECTORY_FILES);
         boolean isDirectoryCreate = file.exists();
 
         if(!isDirectoryCreate) {
@@ -358,115 +461,20 @@ public class FormEmail extends AppCompatActivity {
         }
         if(isDirectoryCreate) {
 
-            Document New_Document = new Document();
-            Date date = new Date();
             Long TimeStamp = System.currentTimeMillis() / 1000;
             pdfname = TimeStamp.toString() + ".pdf";
-            mPath = Environment.getExternalStorageDirectory() + File.separator + MEDIA_DIRECTORY + File.separator + pdfname;
-            File New_File = new File(mPath);
-            if(New_File.exists()){
-                New_File.delete();
-            }
-            try {
-                PdfWriter writter = PdfWriter.getInstance(New_Document,new FileOutputStream(New_File));
-                writter.setLinearPageMode();
-                writter.setFullCompression();
+            mPathPdf = Environment.getExternalStorageDirectory() + File.separator + MEDIA_DIRECTORY_FILES + File.separator + pdfname;
+            Log.i("Path->", "WritePDF: " + mPathPdf.toString().trim());
 
-                /** Propiedades del docuemtno y abrimos **/
-                New_Document.setPageSize(PageSize.A4);
-                New_Document.open();
+            BitmapDrawable drawable = (BitmapDrawable) IV_photo.getDrawable();
+            Bitmap bitmap = drawable.getBitmap();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream);
+            byte[] imageInByte = stream.toByteArray();
 
-                /** Crear las fuentes para el contenido y los titulos **/
-                Font fontContenido = FontFactory.getFont(
-                        FontFactory.TIMES_ROMAN.toString(), 11, Font.NORMAL,
-                        BaseColor.DARK_GRAY);
-                Font fontTitulos = FontFactory.getFont(
-                        FontFactory.TIMES_ROMAN, 16, Font.BOLDITALIC,
-                        BaseColor.DARK_GRAY);
-
-                /** Insertando Logo de la universidad **/
-                ByteArrayOutputStream streamLogo = new ByteArrayOutputStream();
-                Bitmap bitmapLogo = BitmapFactory.decodeResource(getBaseContext().getResources(), R.mipmap.udg);
-                bitmapLogo.compress(Bitmap.CompressFormat.PNG, 100 , streamLogo);
-                Image LogoUni = null;
-                try {
-                    LogoUni = Image.getInstance(streamLogo.toByteArray());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                LogoUni.setAlignment(Image.LEFT);
-                New_Document.add(LogoUni);
-
-                /** Creamos parrafo y seteamos la font **/
-                Paragraph p1  = new Paragraph();
-                p1.add(new Phrase("SISTEMA DE REPORTE DE INFRAESTRUCTURA UDG-CUCEI.",fontTitulos));
-                p1.add(new Phrase(Chunk.NEWLINE));
-                p1.add(new Phrase(Chunk.NEWLINE));
-                p1.setAlignment(Paragraph.ALIGN_JUSTIFIED);
-                New_Document.add(p1);
-
-                /** Ubicacion del problema y detalles **/
-                Paragraph pdet = new Paragraph();
-                pdet.add(new Phrase("Centro Uniersitario de Ciencias Exactas e Ingenierias (CUCEI).",fontContenido));
-                pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase("Blvd. Marcelino García Barragán 1421, Ciudad Universitaria, 44430 Guadalajara, JAL.",fontContenido));
-                pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase("Departamento de Ciencias Basicas, Jorge Zamudio Hernandez.",fontContenido));
-                pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase(date.toString()+", DEDX-A015",fontContenido));
-                pdet.add(new Phrase(Chunk.NEWLINE));
-                pdet.add(new Phrase(Chunk.NEWLINE));
-                New_Document.add(pdet);
-
-                /** Agregamos la descripcion del usuario **/
-                Paragraph p2 = new Paragraph();
-                p2.add(new Phrase(tilAsunto.getEditText().getText().toString().trim() + ":",fontTitulos));
-                p2.add(new Phrase(Chunk.NEWLINE));
-                p2.add(new Phrase(Chunk.NEWLINE));
-                p2.add(new Phrase(tilDesc.getEditText().getText().toString().trim(),fontContenido));
-                p2.add(new Phrase(Chunk.NEWLINE));
-                p2.add(new Phrase(Chunk.NEWLINE));
-                //Parrafo de prueba
-                p2.add(new Phrase(
-                        "El sensor de la X-E1 presenta el mismo excelente rendimiento que el X-Trans CMOS "
-                                + "de 16 megapíxeles del modelo superior de la serie X, la X-Pro1. Gracias la matriz "
-                                + "de filtro de color con disposición aleatoria de los píxeles, desarrollada originalmente"
-                                + " por Fujifilm, el sensor X-Trans CMOS elimina la necesidad del filtro óptico de paso bajo"
-                                + " que se utiliza en los sistemas convencionales para inhibir el muaré a expensas de la"
-                                + " resolución. Esta matriz innovadora permite al sensor X-Trans CMOS captar la luz sin filtrar"
-                                + " del objetivo y obtener una resolución sin precedentes. La exclusiva disposición aleatoria de"
-                                + " la matriz de filtro de color resulta asimismo muy eficaz para mejorar la separación de ruido"
-                                + " en la fotografía de alta sensibilidad. Otra ventaja del gran sensor APS-C es la capacidad"
-                                + " para crear un hermoso efecto “bokeh”, el estético efecto desenfocado que se crea al disparar"
-                                + " con poca profundidad de campo.",
-                        fontContenido));
-                p2.setAlignment(Paragraph.ALIGN_JUSTIFIED);
-                p2.add(new Phrase(Chunk.NEWLINE));
-                p2.add(new Phrase(Chunk.NEWLINE));
-                New_Document.add(p2);
-
-                /** Obtenemos la imagen que capturamos en el intent **/
-
-                Image userImage = null;
-                try {
-                    userImage = Image.getInstance(imageInByte);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                /** Cambiamos el tamaño de la imagen, para que se adapte al documento **/
-                float documentWidth = New_Document.getPageSize().getWidth() - New_Document.leftMargin() - New_Document.rightMargin();
-                float documentHeight = New_Document.getPageSize().getHeight() - New_Document.topMargin() - New_Document.bottomMargin();
-                userImage.scaleToFit(documentWidth, documentHeight);
-                userImage.setAlignment(Image.MIDDLE);
-                /**Agregamos la imagen que capturo el usuario(intent) al documento **/
-                New_Document.add(userImage);
-                New_Document.close();
-
-            } catch (DocumentException e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
+            //Creamos el objecto Report
+            Report makePDF = new Report(mPathPdf, asunto, descripcion, imageInByte, this);
+            makePDF.execute();
         }
     }
     private void ReadPDF(String archivo, Context context){
@@ -495,11 +503,12 @@ public class FormEmail extends AppCompatActivity {
         builder.setPositiveButton("Si", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Intent actCam = new Intent(FormEmail.this, Camara.class);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                actCam.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(actCam);
+                Intent actMain = new Intent(FormEmail.this, PicMain.class);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                actMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(actMain);
+                FormEmail.this.finish();
             }
         });
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -515,7 +524,22 @@ public class FormEmail extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.makePDF_MenuMain:
+                Toast.makeText(this, "Crear Reporte", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.ayuda_MenuMain:
+                Toast.makeText(this, "Ayuda", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.delete_MenuMain:
+                Toast.makeText(this, "Borrar", Toast.LENGTH_SHORT).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     @Override
     public void onBackPressed() {
@@ -544,14 +568,326 @@ public class FormEmail extends AppCompatActivity {
     public Boolean isOnlineNet() {
         try {
             Process p = java.lang.Runtime.getRuntime().exec("ping -c 1 www.google.mx");
-
             int val           = p.waitFor();
             boolean reachable = (val == 0);
             return reachable;
-
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
+    public boolean pointInPolygon(LatLng point, Polygon polygon) {
+        if (point == null) return false;
+        // ray casting alogrithm http://rosettacode.org/wiki/Ray-casting_algorithm
+        int crossings = 0;
+        List<LatLng> path = polygon.getPoints();
+        path.remove(path.size() - 1); //remove the last point that is added automatically by getPoints()
+        // for each edge
+        for (int i = 0; i < path.size(); i++) {
+            LatLng a = path.get(i);
+            int j = i + 1;
+            //to close the last edge, you have to take the first point of your polygon
+            if (j >= path.size()) {
+                j = 0;
+            }
+            LatLng b = path.get(j);
+            if (rayCrossesSegment(point, a, b)) {
+                crossings++;
+            }
+        }
+        // odd number of crossings?
+        return (crossings % 2 == 1);
+    }
+    public boolean rayCrossesSegment(LatLng point, LatLng a, LatLng b) {
+        // Ray Casting algorithm checks, for each segment, if the point is 1) to the left of the segment and 2) not above nor below the segment. If these two conditions are met, it returns true
+        double px = point.longitude,
+                py = point.latitude,
+                ax = a.longitude,
+                ay = a.latitude,
+                bx = b.longitude,
+                by = b.latitude;
+        if (ay > by) {
+            ax = b.longitude;
+            ay = b.latitude;
+            bx = a.longitude;
+            by = a.latitude;
+        }
+        // alter longitude to cater for 180 degree crossings
+        if (px < 0 || ax < 0 || bx < 0) {
+            px += 360;
+            ax += 360;
+            bx += 360;
+        }
+        // if the point has the same latitude as a or b, increase slightly py
+        if (py == ay || py == by) py += 0.00000001;
+        // if the point is above, below or to the right of the segment, it returns false
+        if ((py > by || py < ay) || (px > Math.max(ax, bx))) {
+            return false;
+        }
+        // if the point is not above, below or to the right and is to the left, return true
+        else if (px < Math.min(ax, bx)) {
+            return true;
+        }
+        // if the two above conditions are not met, you have to compare the slope of segment [a,b] (the red one here) and segment [a,p] (the blue one here) to see if your point is to the left of segment [a,b] or not
+        else {
+            double red = (ax != bx) ? ((by - ay) / (bx - ax)) : Double.POSITIVE_INFINITY;
+            double blue = (ax != px) ? ((py - ay) / (px - ax)) : Double.POSITIVE_INFINITY;
+            return (blue >= red);
+        }
+    }
+    private void addMarketReport(LatLng coordenadas) {
+        CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
+        //if(marcador != null) marcador.remove();
+        if (pointInPolygon(coordenadas, poligonoCucei)) {
+            marcador = mMap.addMarker(new MarkerOptions()
+                    .position(coordenadas)
+                    .title("Mi Reporte PICUDG"));
+            mMap.animateCamera(miUbicacion);
+        } else {
+            Snackbar snackbar = Snackbar
+                    .make(RL_FormEmail, "¡Market incorrecto!", Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+    }
+    private void updatePosition(Location location) {
+        if (location != null) {
+            mLatLongActual = new LatLng(location.getLatitude(), location.getLongitude());
+            //addMarketReport(mLatLongActual);
+        }
+    }
+    LocationListener locListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            updatePosition(location);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+    private void myUbication() {
+        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        LocationManager locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Location loc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        updatePosition(loc);
+        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 15000, 10, locListener);
+    }
+    private boolean myRequestGPSPermission(){
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+            mMap.setMyLocationEnabled(true);
+            return true;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
+                mMap.setMyLocationEnabled(true);
+                return true;
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if((shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION))){
+                Snackbar.make(RL_FormEmail, "Necesitamos saber tu locaclizacion para generar reportes :(", Snackbar.LENGTH_INDEFINITE)
+                        .setAction(android.R.string.ok, new View.OnClickListener() {
+                            @TargetApi(Build.VERSION_CODES.M)
+                            @Override
+                            public void onClick(View v) {
+                                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
+                            }
+                        }).show();
+            }else{
+                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
+            }
+        }
+        return false;
+    }
+    private void showOptions() {
+        final CharSequence[] option = {"Elegir Foto", "Tomar Foto", "Cancelar"};
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Elige una opción:");
+        builder.setIcon(R.drawable.ic_add_to_photos_black_24dp);
+        builder.setItems(option, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (option[which] == "Elegir Foto") {
+                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/.*");
+                    startActivityForResult(intent.createChooser(intent, "Selecciona una imagen"), SELECT_PICTURE);
+                } else if (option[which] == "Tomar Foto") {
+                    opcCamera();
+                } else {
+                    dialog.dismiss();
+                }
+            }
+        });
+        builder.show();
+    }
+    private void opcCamera() {
+        File file = new File(Environment.getExternalStorageDirectory(), MEDIA_DIRECTORY);
+        boolean isDirectoryCreate = file.exists();
+        if (!isDirectoryCreate) {
+            isDirectoryCreate = file.mkdirs();
+        }
+        if (isDirectoryCreate) {
+            Long TimeStamp = System.currentTimeMillis() / 1000;
+            String Img_name = TimeStamp.toString() + ".jpg";
+            mPath = Environment.getExternalStorageDirectory() + File.separator
+                    + MEDIA_DIRECTORY + File.separator + Img_name;
+            File New_File = new File(mPath);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(New_File));
+            startActivityForResult(intent, PHOTO_CODE);
+        }
+    }
+    private boolean myRequestPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+        if ((checkSelfPermission(WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
+                (checkSelfPermission(CAMERA) == PackageManager.PERMISSION_GRANTED) &&
+                (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            return true;
+        }
+        if ((shouldShowRequestPermissionRationale(WRITE_EXTERNAL_STORAGE)) ||
+                (shouldShowRequestPermissionRationale(CAMERA)) ||
+                (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION))) {
+            Snackbar.make(RL_FormEmail, "Permisos necesarios para la aplicación", Snackbar.LENGTH_INDEFINITE)
+                    .setAction(android.R.string.ok, new View.OnClickListener() {
+                        @TargetApi(Build.VERSION_CODES.M)
+                        @Override
+                        public void onClick(View v) {
+                            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION}, MY_PERMISISONS);
+                        }
+                    }).show();
+        } else {
+            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION}, MY_PERMISISONS);
+        }
+        return false;
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case PHOTO_CODE:
+                    MediaScannerConnection.scanFile(this, new String[]{mPath}, null,
+                            new MediaScannerConnection.OnScanCompletedListener() {
+                                @Override
+                                public void onScanCompleted(String path, Uri uri) {
+                                    Log.i("ExternalStorage", "Scanner" + path + ":");
+                                    Log.i("ExternalStorage", "->Uri" + uri);
+                                }
+                            });
+                    IV_photo.setVisibility(View.VISIBLE);
+                    Glide.with(this)
+                            .load(mPath)
+                            .asBitmap()
+                            .override(400, 400)
+                            .centerCrop()
+                            .into(IV_photo);
+                    takepic = true;
+                    addMarketReport(mLatLongActual);
+                    break;
+                case SELECT_PICTURE:
+                    IV_photo.setVisibility(View.VISIBLE);
+                    pathuri = data.getData();
+                    Glide.with(this)
+                            .load(pathuri)
+                            .asBitmap()
+                            .override(400, 400)
+                            .centerCrop()
+                            .into(IV_photo);
+                    takepic = false;
+                    addMarketReport(mLatLongActual);
+                    break;
+            }
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == MY_PERMISISONS) {
+            if (grantResults.length == 3 && grantResults[0] == getPackageManager().PERMISSION_GRANTED &&
+                    grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+                    grantResults[2] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permisos Aceptados", Toast.LENGTH_SHORT).show();
+                BT_photo.setEnabled(true);
+                if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                mMap.setMyLocationEnabled(true);
+            }
+        } else {
+            showExplanation();
+        }
+    }
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        outState.putString("file_path",mPath);
+    }
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mPath = savedInstanceState.getString("file_path");
+    }
+    private void showExplanation() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Permisos Denegados");
+        builder.setMessage("Para usar esta aplicación, necesitas aceptar los permisos solicitados");
+        builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent();
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package",getPackageName(),null);
+                intent.setData(uri);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                finish();
+            }
+        });
+        builder.show();
+    }
+    private void alertExitMsg(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_info_outline_white_24dp);
+        builder.setTitle("¿Estas Seguro?");
+        builder.setMessage("Presiona SI para salir de la aplicación")
+                .setCancelable(false)
+                .setPositiveButton("Si", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                        System.exit(0);
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        builder.show();
+    }
+
 }

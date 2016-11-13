@@ -36,7 +36,7 @@ import static android.content.Context.CONNECTIVITY_SERVICE;
  */
 
 public class SendMail extends AsyncTask<Void, Void, Void> {
-    /** Utilizamos AsyncTask porque esta clase trabajara con networking operations **/
+    /** Utilizamos AsyncTask porque esta clase trabajara con networking operations y la ocupamos en segundo plano **/
 
     private Context context;
     private Session session;
@@ -72,7 +72,7 @@ public class SendMail extends AsyncTask<Void, Void, Void> {
         //Dismissing the progress dialog
         //progressDialog.dismiss();
         //Showing a success message
-        Toast.makeText(context, "Reporte Enviado", Toast.LENGTH_LONG).show();
+        Toast.makeText(context, "¡Reporte Enviado con exito!", Toast.LENGTH_LONG).show();
     }
 
     @Override
