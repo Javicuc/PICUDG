@@ -1,18 +1,12 @@
-package com.picudg.catapp.picudg;
+package com.picudg.catapp.picudg.Tools;
 
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.widget.Toast;
+
+import com.picudg.catapp.picudg.Tools.Config;
+
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -28,8 +22,6 @@ import javax.activation.FileDataSource;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.BodyPart;
 import javax.mail.internet.MimeMultipart;
-
-import static android.content.Context.CONNECTIVITY_SERVICE;
 
 /**
  * Created by javilubz on 30/10/16.

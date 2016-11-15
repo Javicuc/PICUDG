@@ -8,22 +8,6 @@
     <!-- Facebook Strings -->
     <string name="facebook_app_id">971794976298192</string>
 
-    <string name="dependencia">Dependencia</string>
-    <string name="cont_dependencia">Contacto Dependencia</string>
-    <string name="centro_estudios">Centro de estudios</string>
-    <array name="Dependencia">
-        <item>Dpto...</item>
-        <item>Dpto.Ingenierias</item>
-        <item>Dpto.Ciencias Basicas</item>
-        <item>Dpto.Electronica y Computacion</item>
-    </array>
-    <array name="Correo_dependencia">
-        <item>Elige un Departamento</item>
-        <item>diving@cucei.udg.mx</item>
-        <item>divcb@cucei.udg.mx</item>
-        <item>divec@cucei.udg.mx</item>
-    </array>
-
     <!-- Strings relacionados en login -->
     <string name="prompt_email">Correo</string>
     <string name="prompt_password">Contraseña (opcional)</string>

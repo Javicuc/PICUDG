@@ -76,8 +76,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/background_light"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -85,17 +83,26 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/primary"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="3.7">
+
+                <fragment
+                    android:id="@+id/mapForm"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/LinearLayout1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="3.8"
-                android:paddingTop="8dp"
-                android:elevation="12dp"
-                android:layout_gravity="center_horizontal"
+                android:layout_weight="4.5"
                 android:orientation="horizontal">
 
                 <ImageView
@@ -105,12 +112,8 @@
                     android:visibility="gone"
                     android:scaleType="centerCrop"
                     android:adjustViewBounds="true"/>
-                <!--
-                android:scaleType="centerInside"
-                android:adjustViewBounds="true"
-                -->
 
-                <android.support.v7.widget.AppCompatImageButton
+                <ImageButton
                     android:id="@+id/BT_cam"
                     android:elevation="12dp"
                     android:layout_width="match_parent"
@@ -119,15 +122,13 @@
                     app:srcCompat="@drawable/ic_add_a_photo_white_48dp"/>
 
             </LinearLayout>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="8dp"
-                android:elevation="12dp"
                 android:layout_gravity="center_horizontal"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
                 android:orientation="horizontal">
 
                 <Button
@@ -165,27 +166,13 @@
                     android:layout_weight="1"/>
 
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="3">
-
-                <fragment
-                    android:id="@+id/mapForm"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"
-                    android:layout_width="match_parent"
-                    android:layout_margin="@dimen/activity_horizontal_margin"
-                    android:layout_height="match_parent"/>
-            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="4.8">
-
             </LinearLayout>
         </LinearLayout>
-    </FrameLayout>
+</FrameLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

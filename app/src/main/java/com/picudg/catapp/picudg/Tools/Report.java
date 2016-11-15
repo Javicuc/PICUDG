@@ -1,4 +1,4 @@
-package com.picudg.catapp.picudg;
+package com.picudg.catapp.picudg.Tools;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -24,6 +24,7 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.picudg.catapp.picudg.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

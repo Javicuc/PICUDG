@@ -15,7 +15,15 @@
     Once you have your key (it starts with "AIza"), replace the "google_maps_key"
     string in this file.
     -->
+
+    <!-- CLAVE API de la laptop
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
-         AIzaSyDZHFhEiauQ0yFtjPQv8tFVmGQgR6qJwQM
+         AIzaSyBtLP_pM7SqEKVToo4sZNdu1gbXEJRKwaI
+    </string>
+    -->
+
+    <!-- Nota: si deseamos usar correctamente la aplicacion, debemos generar otra clave de api, a partir de nuestra llave SHA-1 en androidclc-->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
+         AIzaSyAgbFtBdlnYjb134kej-arEgILVK-IwYbA
     </string>
 </resources>

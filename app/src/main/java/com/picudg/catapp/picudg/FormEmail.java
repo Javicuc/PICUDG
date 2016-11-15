@@ -8,7 +8,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
@@ -32,13 +31,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatDialogFragment;
 import android.support.v7.widget.Toolbar;
 import android.transition.Explode;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -48,7 +45,6 @@ import android.view.animation.BounceInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -64,9 +60,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
-import com.google.android.gms.vision.text.Text;
 import com.jaouan.revealator.Revealator;
 import com.jaouan.revealator.animations.AnimationListenerAdapter;
+import com.picudg.catapp.picudg.Tools.Report;
+import com.picudg.catapp.picudg.Tools.SendMail;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.List;
@@ -132,13 +130,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent actMain = new Intent(FormEmail.this, PicMain.class);
-                actMain.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                actMain.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                actMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(actMain);
-                FormEmail.this.finish();
+               alertMsg();
             }
         });
 
@@ -170,54 +162,24 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             }
         });
 
-        tb_MakePDF.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        tb_MakePDF.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked && IV_photo.getDrawable() != null) {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
-
-                    LayoutInflater inflater = FormEmail.this.getLayoutInflater();
-
-                    View v = inflater.inflate(R.layout.fullscreen_dialog, null);
-                    builder.setView(v);
-
-                    Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
-                    final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
-                    final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
-                    final AlertDialog dialog = builder.create();
-
-                    okReporte.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-
-                            asunto      = tilAsunto.getEditText().getText().toString().trim();
-                            descripcion = tilDescripcion.getEditText().getText().toString().trim();
-
-                            if (validaCampos(asunto) && validaCampos(descripcion)){
-                                WritePDF();
-                                tb_MakePDF.setChecked(false);
-                                tb_MakePDF.setClickable(false);
-                                reporteListo = true;
-                                dialog.dismiss();
-                            }else{
-                                Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                    dialog.show();
-                }else {
+            public void onClick(View view) {
+                if (IV_photo.getDrawable() != null && reporteListo == false) {
+                    llenarReporte();
+                } else {
                     Snackbar snackbar = Snackbar
-                            .make(RL_FormEmail, "¡Toma una Pic!", Snackbar.LENGTH_LONG);
+                            .make(RL_FormEmail, "¡Toma una pic!", Snackbar.LENGTH_LONG);
                     snackbar.show();
-                    tb_MakePDF.setClickable(true);
                     tb_MakePDF.setChecked(false);
                 }
             }
         });
+
         bt_Limpiar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                retoreInputsLayout();
+                LimpiarPantalla();
                 if (marcador != null) {
                     marcador.remove();
                 }
@@ -238,45 +200,9 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                         startMain();
                     }
                 }else{
-                    if (IV_photo.getDrawable() != null) {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
-
-                        LayoutInflater inflater = FormEmail.this.getLayoutInflater();
-
-                        View v = inflater.inflate(R.layout.fullscreen_dialog, null);
-                        builder.setView(v);
-
-                        Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
-                        final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
-                        final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
-                        final AlertDialog dialog = builder.create();
-
-                        okReporte.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-
-                                asunto      = tilAsunto.getEditText().getText().toString().trim();
-                                descripcion = tilDescripcion.getEditText().getText().toString().trim();
-
-                                if (validaCampos(asunto) && validaCampos(descripcion)){
-                                    WritePDF();
-                                    tb_MakePDF.setChecked(false);
-                                    tb_MakePDF.setClickable(false);
-                                    reporteListo = true;
-                                    dialog.dismiss();
-                                }else{
-                                    Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
-                                }
-                            }
-                        });
-                        dialog.show();
-                    }else {
-                        Snackbar snackbar = Snackbar
-                                .make(RL_FormEmail, "¡Toma una Pic!", Snackbar.LENGTH_LONG);
-                        snackbar.show();
-                        tb_MakePDF.setClickable(true);
-                        tb_MakePDF.setChecked(false);
-                    }
+                    Snackbar snackbar = Snackbar
+                            .make(RL_FormEmail, "¡Completa el formulario!", Snackbar.LENGTH_LONG);
+                    snackbar.show();
                 }
             }
         });
@@ -294,6 +220,46 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
         });*/
     }
+
+    private AlertDialog llenarReporte() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
+
+        LayoutInflater inflater = FormEmail.this.getLayoutInflater();
+
+        View v = inflater.inflate(R.layout.fullscreen_dialog, null);
+        builder.setView(v);
+
+        Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
+        final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
+        final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
+        final AlertDialog dialog = builder.create();
+
+        okReporte.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                asunto = tilAsunto.getEditText().getText().toString().trim();
+                descripcion = tilDescripcion.getEditText().getText().toString().trim();
+
+                if (validaCampos(asunto) && validaCampos(descripcion)) {
+                    WritePDF();
+                    tb_MakePDF.setClickable(false);
+                    tb_MakePDF.setChecked(true);
+                    tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.accent));
+                    reporteListo = true;
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.show();
+        tb_MakePDF.setClickable(true);
+        tb_MakePDF.setChecked(false);
+        return builder.create();
+    }
+
+    @SuppressWarnings("MissingPermission")
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
@@ -353,9 +319,9 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 actMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(actMain);
+                FormEmail.this.finish();
             }
-        }, 3000);
-        FormEmail.this.finish();
+        }, 4500);
     }
     /*** Adjuntamos el metodo enviar email.*/
     @OnClick(R.id.fab)
@@ -427,6 +393,28 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                     }
                 }).start();
     }
+    private void LimpiarPantalla() {
+        mInputsLayout.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                final Animator circularReveal = ViewAnimationUtils.createCircularReveal(mInputsLayout,
+                        (int) (mFab.getX() + mFab.getWidth() / 2),
+                        (int) (mFab.getY() + mFab.getHeight() / 2), 0, mInputsLayout.getHeight());
+                circularReveal.setDuration(400);
+                circularReveal.start();
+                mCheckImageView.setVisibility(View.INVISIBLE);
+                mSentLayout.setVisibility(View.INVISIBLE);
+                mInputsLayout.setVisibility(View.VISIBLE);
+                IV_photo.setImageResource(0);
+                IV_photo.setVisibility(View.GONE);
+                tb_MakePDF.setClickable(true);
+                tb_MakePDF.setChecked(false);
+                tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
+                reporteListo = false;
+            }
+        }, 1000);
+    }
     /**Inicializamos nuestros componentes.*/
     private void retoreInputsLayout() {
         mInputsLayout.postDelayed(new Runnable() {
@@ -442,6 +430,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 IV_photo.setVisibility(View.GONE);
                 tb_MakePDF.setClickable(true);
                 tb_MakePDF.setChecked(false);
+                tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
+                reporteListo = false;
             }
         }, 1000);
     }
@@ -813,6 +803,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                     addMarketReport(mLatLongActual);
                     break;
             }
+            llenarReporte();
         }
     }
     @Override
@@ -866,27 +857,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 finish();
             }
         });
-        builder.show();
-    }
-    private void alertExitMsg(){
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setIcon(R.drawable.ic_info_outline_white_24dp);
-        builder.setTitle("¿Estas Seguro?");
-        builder.setMessage("Presiona SI para salir de la aplicación")
-                .setCancelable(false)
-                .setPositiveButton("Si", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                        System.exit(0);
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
         builder.show();
     }
 
