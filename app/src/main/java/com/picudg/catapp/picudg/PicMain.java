@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -16,9 +19,12 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.transition.Explode;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -28,6 +34,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -48,13 +55,22 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseException;
+import com.picudg.catapp.picudg.Modelo.Coordenadas;
+import com.picudg.catapp.picudg.Modelo.Market;
+import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.Modelo.Usuario;
+import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 
+import java.text.BreakIterator;
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -84,6 +100,15 @@ public class PicMain extends AppCompatActivity
     private CameraUpdate cuceiPos;
     private Polygon poligonoCucei;
     private GoogleApiClient mGoogleApiClient;
+    private OperacionesBaseDatos datos;
+    private FirebaseUser user;
+    private String userName;
+    private String userEmail;
+    private String userCod;
+    private String userSchool;
+    private TextView nav_userName;
+    private TextView nav_userEmail;
+    private ImageView nav_userPhoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,37 +128,22 @@ public class PicMain extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         View hView =  navigationView.getHeaderView(0);
         navigationView.setNavigationItemSelectedListener(this);
-
-
-        TextView nav_userName = (TextView) hView.findViewById(R.id.TV_UserName_NavHeader);
-        TextView nav_userEmail = (TextView) hView.findViewById(R.id.TV_UserEmail_NavHeader);
-        ImageView nav_userPhoto = (ImageView) hView.findViewById(R.id.IV_UserPhoto_NavHeader);
+        nav_userName = (TextView) hView.findViewById(R.id.TV_UserName_NavHeader);
+        nav_userEmail = (TextView) hView.findViewById(R.id.TV_UserEmail_NavHeader);
+        nav_userPhoto = (ImageView) hView.findViewById(R.id.IV_UserPhoto_NavHeader);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapMain);
         mapFragment.getMapAsync(this);
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        user = FirebaseAuth.getInstance().getCurrentUser();
 
-        if(user != null){
-            if(user.getPhotoUrl()!=null)
-                Glide.with(this)
-                        .load(user.getPhotoUrl())
-                        .centerCrop()
-                        .override(100,100)
-                        .into(nav_userPhoto);
-            if(user.getDisplayName()!=null)
-                nav_userName.setText(user.getDisplayName());
-            else
-                nav_userName.setText("PICUDG");
-            nav_userEmail.setText(user.getEmail());
-        }else{
-            startLogin();
-        }
+        navigationInfo();
 
         if(myRequestPermission()){
             bt_Reportes.setEnabled(true);
         }
+
         /** Animacion solo disponible para dispositivos 5.0 en adelante **/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Explode explode = new Explode();
@@ -141,20 +151,27 @@ public class PicMain extends AppCompatActivity
             getWindow().setEnterTransition(explode);
             getWindow().setReturnTransition(explode);
         }
+
         bt_Info.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
             }
         });
+
         bt_Reportes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent actReporte = new Intent(PicMain.this,FormEmail.class);
-                //actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                //actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivity(actReporte);
+                if(comprobarUsuario()) {
+                    Intent actReporte = new Intent(PicMain.this, FormEmail.class);
+                    actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                    startActivity(actReporte);
+                }else{
+                    llenarUsuario();
+                }
             }
         });
+
         bt_listReportes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -162,7 +179,94 @@ public class PicMain extends AppCompatActivity
             }
         });
     }
+    public void navigationInfo(){
+        if(user != null){
+            if(comprobarUsuario()) {
+                if (user.getPhotoUrl() != null)
+                    Glide.with(this)
+                            .load(user.getPhotoUrl())
+                            .centerCrop()
+                            .override(100, 100)
+                            .into(nav_userPhoto);
+                if (userName != null)
+                    nav_userName.setText(userName);
+                else
+                    nav_userName.setText("PICUDG");
+                nav_userEmail.setText(user.getEmail());
+            }else{
+                llenarUsuario();
+            }
+        }else{
+            startLogin();
+        }
+    }
+    private boolean comprobarUsuario(){
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
 
+        userEmail = user.getEmail();
+        Log.i("Correo->",userEmail);
+        Cursor datosUsuario = datos.obtenerUsuarioCorreo(userEmail);
+        DatabaseUtils.dumpCursor(datosUsuario);
+        if(datosUsuario != null && datosUsuario.moveToFirst())
+            return true;
+        datos.getDb().close();
+        return false;
+    }
+    private AlertDialog llenarUsuario() {
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(PicMain.this);
+
+        LayoutInflater inflater = PicMain.this.getLayoutInflater();
+
+        View v = inflater.inflate(R.layout.llenarusuario_dialog, null);
+        builder.setView(v);
+
+        Button okReporte = (Button) v.findViewById(R.id.BT_reporteUsuario);
+        final TextInputLayout tilNombre = (TextInputLayout) v.findViewById(R.id.TIL_NombreUsuario);
+        final TextInputLayout tilCodigo = (TextInputLayout) v.findViewById(R.id.TIL_CodigoUsuario);
+        final AlertDialog dialog = builder.create();
+        tilNombre.getEditText().setText(user.getDisplayName());
+        okReporte.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (tilNombre.getEditText().getText() != null && tilCodigo.getEditText().getText().length() == 9) {
+
+                    /** Esta funcion deber ser un Spinner dentro del dialog, cuando seleccione un acronimo, bucara
+                     * el id del centro, si se encuentra dentro de las coordenadas del centro seleccionado retornara TRUE, de
+                     * momento asumiremos que todos los nuevos usuarios pertenecen a CUCEI**/
+                    Cursor idCentro = datos.obtenerIdCentroEstudio("CUCEI");
+                    idCentro.moveToFirst();
+                    if (idCentro != null) {
+                        try {
+                            datos.getDb().beginTransaction();
+                            userSchool = idCentro.getString(idCentro.getColumnIndex("ID_Centro"));
+                            userName = tilNombre.getEditText().getText().toString().trim();
+                            userCod = tilCodigo.getEditText().getText().toString();
+                            datos.insertarUsuario(new Usuario(null, userName,
+                                    userEmail, userCod, userSchool));
+                            datos.getDb().setTransactionSuccessful();
+                        }catch (SQLiteConstraintException e){
+                            Toast.makeText(PicMain.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                            Log.d("Insertar Usuario->", "Fallo al insertar: ,", e);
+                            return;
+                        }finally{
+                            datos.getDb().endTransaction();
+                        }
+                    }
+                    idCentro.close();
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(PicMain.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.show();
+        datos.getDb().close();
+        return builder.create();
+    }
     private void startLogin() {
         Intent intent = new Intent(this,Login.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -178,7 +282,6 @@ public class PicMain extends AppCompatActivity
 
         startLogin();
     }
-
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -261,37 +364,42 @@ public class PicMain extends AppCompatActivity
             }
         }
         // Agregando un market al mapa
-        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias"));
+        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_school_black_36dp)));
         cuceiPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
         mMap.animateCamera(cuceiPos);
+
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+
+
+        ArrayList<LatLng> LatLong = new ArrayList<LatLng>();
+        Cursor cursor = datos.obtenerLatidLongitudCentro("CUCEI");
+        //DatabaseUtils.dumpCursor(cursor);
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()) {
+            LatLong.add(new LatLng(cursor.getDouble(cursor.getColumnIndex("Latitud")),cursor.getDouble(cursor.getColumnIndex("Longitud"))));
+            cursor.moveToNext();
+        }
+        cursor.close();
+
         final PolygonOptions PolyCucei = new PolygonOptions()
-                .add(new LatLng(20.655883, -103.327721))
-                .add(new LatLng(20.656397, -103.326595))
-                .add(new LatLng(20.656987, -103.326632))
-                .add(new LatLng(20.656939, -103.327376))
-                .add(new LatLng(20.657037, -103.327385))
-                .add(new LatLng(20.657027, -103.327535))
-                .add(new LatLng(20.657616, -103.327666))
-                .add(new LatLng(20.657806, -103.327261))
-                .add(new LatLng(20.659329, -103.327352))
-                .add(new LatLng(20.659757, -103.327018))
-                .add(new LatLng(20.659354, -103.326466))
-                .add(new LatLng(20.658399, -103.326397))
-                .add(new LatLng(20.658384, -103.325929))
-                .add(new LatLng(20.658169, -103.325909))
-                .add(new LatLng(20.658278, -103.324515))
-                .add(new LatLng(20.659792, -103.324616))
-                .add(new LatLng(20.659559, -103.324180))
-                .add(new LatLng(20.656062, -103.323984))
-                .add(new LatLng(20.655633, -103.324711))
-                .add(new LatLng(20.654013, -103.324238))
-                .add(new LatLng(20.653345, -103.325795))
-                .add(new LatLng(20.655883, -103.327721))
                 .strokeColor(0xE6CCFFFF)
                 .fillColor(0x7FCCFFFF);
+        PolyCucei.addAll(LatLong);
         poligonoCucei = mMap.addPolygon(PolyCucei);
-
         myUbication();
+
+        Cursor AllMarkers = datos.obtenerMarketLatitudLongitudAll();
+        AllMarkers.moveToFirst();
+        DatabaseUtils.dumpCursor(AllMarkers);
+        while(!AllMarkers.isAfterLast()) {
+            mMap.addMarker(new MarkerOptions().position(new LatLng(AllMarkers.getDouble(AllMarkers.getColumnIndex("Latitud")),
+                    AllMarkers.getDouble(AllMarkers.getColumnIndex("Longitud")))).title(AllMarkers.getString(AllMarkers.getColumnIndex("Titulo")))
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
+            AllMarkers.moveToNext();
+        }
+        AllMarkers.close();
 
         if (pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
@@ -524,4 +632,5 @@ public class PicMain extends AppCompatActivity
         mGoogleApiClient.connect();
         super.onStart();
     }
+
 }

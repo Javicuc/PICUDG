@@ -117,9 +117,7 @@
                     android:id="@+id/BT_cam"
                     android:elevation="12dp"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:background="@color/primary"
-                    app:srcCompat="@drawable/ic_add_a_photo_white_48dp"/>
+                    android:layout_height="match_parent" />
 
             </LinearLayout>
             <LinearLayout

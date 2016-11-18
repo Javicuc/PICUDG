@@ -1,6 +1,4 @@
 package com.picudg.catapp.picudg.SQLite;
-
-
 import java.util.UUID;
 
 /**
@@ -35,6 +33,7 @@ public class InibdPicudg {
         String FK_UBICACION  = "FK_Ubicacion";
         String FK_CENTRO     = "FK_Centro";
         String FK_MARKET     = "FK_Market";
+        String INSERCION     = "INSERCION";
     }
 
     interface ColumnasMarket  {
@@ -50,6 +49,7 @@ public class InibdPicudg {
         String REPORTEURI   = "ReporteUri";
         String FK_USUARIO   = "FK_Usuario";
         String FK_MARKET    = "FK_Market";
+        String IMAGENURI    = "Imagen";
     }
     interface ColumnasUbicacion  {
         String ID_UBICACION = "ID_Ubicacion";

@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.provider.BaseColumns;
+import android.support.design.widget.CoordinatorLayout;
 
 import com.picudg.catapp.picudg.SQLite.InibdPicudg.CentroEstudio;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg.Contacto;
@@ -14,6 +15,7 @@ import com.picudg.catapp.picudg.SQLite.InibdPicudg.Market;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg.Reporte;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg.Ubicacion;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg.Usuario;
+import com.picudg.catapp.picudg.Tools.Report;
 
 
 /**
@@ -98,12 +100,13 @@ public class BaseDatosPicudg extends SQLiteOpenHelper{
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "%s TEXT UNIQUE NOT NULL, %s REAL NOT NULL, %s REAL NOT NULL," +
-                    "%s TEXT %s, %s TEXT %s, %s TEXT %s)",
+                    "%s TEXT %s, %s TEXT %s, %s TEXT %s ON DELETE CASCADE, %s INTEGER)",
                 Tablas.COORDENADAS, BaseColumns._ID,
                 Coordenadas.ID_COORDENADA, Coordenadas.LONGITUD, Coordenadas.LATITUD,
                 Coordenadas.FK_UBICACION, Referencias.ID_UBICACION,
                 Coordenadas.FK_CENTRO, Referencias.ID_CENTROESTUDIO,
-                Coordenadas.FK_MARKET, Referencias.ID_MARKET));
+                Coordenadas.FK_MARKET, Referencias.ID_MARKET,
+                Coordenadas.INSERCION));
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "%s TEXT UNIQUE NOT NULL,%s TEXT," +
@@ -114,21 +117,21 @@ public class BaseDatosPicudg extends SQLiteOpenHelper{
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL, %s TEXT NOT NULL, %s TEXT," +
-                "%s TEXT NOT NULL %s,%s TEXT NOT NULL %s)",
+                "%s TEXT NOT NULL %s,%s TEXT NOT NULL %s ON DELETE CASCADE, %s TEXT)",
                 Tablas.REPORTE, BaseColumns._ID,
                 Reporte.ID_REPORTE, Reporte.ASUNTO, Reporte.DESCRIPCION, Reporte.REPORTEURI,
                 Reporte.FK_USUARIO, Referencias.ID_USUARIO,
-                Reporte.FK_MARKET, Referencias.ID_MARKET));
+                Reporte.FK_MARKET, Referencias.ID_MARKET, Reporte.IMAGENURI));
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL,%s TEXT NOT NULL %s)",
+                "%s TEXT UNIQUE NOT NULL,%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL %s)",
                 Tablas.UBICACION, BaseColumns._ID,
                 Ubicacion.ID_UBICACION, Ubicacion.NOMBRE,
                 Ubicacion.FK_CENTRO, Referencias.ID_CENTROESTUDIO));
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "%s TEXT UNIQUE NOT NULL,%s TEXT DEFAULT PICUDG,%s TEXT NOT NULL,"+
-                 "%s INTEGER,%s TEXT NOT NULL %s)",
+                "%s TEXT UNIQUE NOT NULL,%s TEXT DEFAULT PICUDG,%s TEXT UNIQUE NOT NULL,"+
+                 "%s INTEGER UNIQUE NOT NULL,%s TEXT NOT NULL %s)",
                 Tablas.USUARIO,BaseColumns._ID,
                 Usuario.ID_USUARIO, Usuario.NOMBRE, Usuario.CORREO, Usuario.CODIGO,
                 Usuario.FK_CENTRO, Referencias.ID_CENTROESTUDIO));
@@ -145,7 +148,6 @@ public class BaseDatosPicudg extends SQLiteOpenHelper{
                 Contactos_Ubicacion.ID_CONTACTOSUBICACION,
                 Contactos_Ubicacion.FK_UBICACION, Referencias.ID_UBICACION,
                 Contactos_Ubicacion.FK_CONTACTO, Referencias.ID_CONTACTO));
-
     }
 
     @Override

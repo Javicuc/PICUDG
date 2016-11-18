@@ -12,9 +12,10 @@ public class Coordenadas {
     public String fk_Ubicacion;
     public String fk_Centro;
     public String fk_Market;
+    public int    insercion;
 
     public Coordenadas(String ID, double Long, double Lat, String fkUbicacion,
-                       String fkCentro, String fkMarket){
+                       String fkCentro, String fkMarket, int insert){
 
         this.idCoordenada = ID;
         this.Longitud = Long;
@@ -22,7 +23,7 @@ public class Coordenadas {
         this.fk_Ubicacion = fkUbicacion;
         this.fk_Centro = fkCentro;
         this.fk_Market = fkMarket;
+        this.insercion = insert;
 
     }
-
 }

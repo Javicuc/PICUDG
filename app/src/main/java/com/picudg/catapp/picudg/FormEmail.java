@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
@@ -21,6 +23,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PersistableBundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -55,18 +58,26 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.jaouan.revealator.Revealator;
 import com.jaouan.revealator.animations.AnimationListenerAdapter;
+import com.picudg.catapp.picudg.Modelo.Coordenadas;
+import com.picudg.catapp.picudg.Modelo.Market;
+import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 import com.picudg.catapp.picudg.Tools.Report;
 import com.picudg.catapp.picudg.Tools.SendMail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import butterknife.BindView;
@@ -113,9 +124,12 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     boolean reporteListo;
     private GoogleMap mMap;
     private LatLng mLatLongActual;
+    private LatLng mLatLongReporteActual;
     private Marker marcador;
     private CameraUpdate cuceiPos;
     private Polygon poligonoCucei;
+    private FirebaseUser user;
+    OperacionesBaseDatos datos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,6 +147,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                alertMsg();
             }
         });
+
+        user = FirebaseAuth.getInstance().getCurrentUser();
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapForm);
@@ -179,11 +195,15 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         bt_Limpiar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                datos = OperacionesBaseDatos
+                        .obtenerInstancia(getApplicationContext());
                 LimpiarPantalla();
                 if (marcador != null) {
+                    datos.eliminarMarketNombre(marcador.getTitle());
                     marcador.remove();
                 }
                 mMap.animateCamera(cuceiPos);
+                datos.getDb().close();
             }
         });
 
@@ -206,22 +226,11 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 }
             }
         });
-
-        /*spinDpto.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String [] Mails = getResources().getStringArray(R.array.Correo_dependencia);
-                tilMaildpto.setText(Mails[i]);
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-
-        });*/
     }
 
     private AlertDialog llenarReporte() {
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
         final AlertDialog.Builder builder = new AlertDialog.Builder(FormEmail.this);
 
         LayoutInflater inflater = FormEmail.this.getLayoutInflater();
@@ -243,6 +252,14 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
                 if (validaCampos(asunto) && validaCampos(descripcion)) {
                     WritePDF();
+                    addMarketReport(mLatLongReporteActual);
+                    String idMarkerTMP = datos.insertarMarket(new Market(null,null,"Reporte",asunto));
+                    Cursor idUsuarioTMP = datos.obtenerUsuarioCorreo(user.getEmail());
+                    idUsuarioTMP.moveToFirst();
+                    DatabaseUtils.dumpCursor(idUsuarioTMP);
+                    datos.insertarReportes(new Reporte(null,asunto,descripcion,mPathPdf,
+                            idUsuarioTMP.getString(idUsuarioTMP.getColumnIndex("ID_Usuario")),idMarkerTMP,String.valueOf(takepic?mPath:pathuri)));
+                    datos.insertarCoordenadas(new Coordenadas(null,mLatLongReporteActual.longitude,mLatLongReporteActual.latitude,null,null,idMarkerTMP,2));
                     tb_MakePDF.setClickable(false);
                     tb_MakePDF.setChecked(true);
                     tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.accent));
@@ -254,6 +271,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             }
         });
         dialog.show();
+        datos.getDb().close();
         tb_MakePDF.setClickable(true);
         tb_MakePDF.setChecked(false);
         return builder.create();
@@ -266,38 +284,44 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         mMap.setMyLocationEnabled(myRequestGPSPermission());
         // Agregando un market al mapa
         LatLng mLatLngCucei = new LatLng(20.653910, -103.325807);
-        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias"));
+        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_school_black_36dp)));
         cuceiPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
         mMap.animateCamera(cuceiPos);
+
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+
+        ArrayList<LatLng> LatLong = new ArrayList<LatLng>();
+        Cursor cursor = datos.obtenerLatidLongitudCentro("CUCEI");
+        //DatabaseUtils.dumpCursor(cursor);
+        cursor.moveToFirst();
+        while(!cursor.isAfterLast()) {
+            LatLong.add(new LatLng(cursor.getDouble(cursor.getColumnIndex("Latitud")),cursor.getDouble(cursor.getColumnIndex("Longitud"))));
+            cursor.moveToNext();
+        }
+        cursor.close();
+
         final PolygonOptions PolyCucei = new PolygonOptions()
-                .add(new LatLng(20.655883, -103.327721))
-                .add(new LatLng(20.656397, -103.326595))
-                .add(new LatLng(20.656987, -103.326632))
-                .add(new LatLng(20.656939, -103.327376))
-                .add(new LatLng(20.657037, -103.327385))
-                .add(new LatLng(20.657027, -103.327535))
-                .add(new LatLng(20.657616, -103.327666))
-                .add(new LatLng(20.657806, -103.327261))
-                .add(new LatLng(20.659329, -103.327352))
-                .add(new LatLng(20.659757, -103.327018))
-                .add(new LatLng(20.659354, -103.326466))
-                .add(new LatLng(20.658399, -103.326397))
-                .add(new LatLng(20.658384, -103.325929))
-                .add(new LatLng(20.658169, -103.325909))
-                .add(new LatLng(20.658278, -103.324515))
-                .add(new LatLng(20.659792, -103.324616))
-                .add(new LatLng(20.659559, -103.324180))
-                .add(new LatLng(20.656062, -103.323984))
-                .add(new LatLng(20.655633, -103.324711))
-                .add(new LatLng(20.654013, -103.324238))
-                .add(new LatLng(20.653345, -103.325795))
-                .add(new LatLng(20.655883, -103.327721))
                 .strokeColor(0xE6CCFFFF)
                 .fillColor(0x7FCCFFFF);
+        PolyCucei.addAll(LatLong);
         poligonoCucei = mMap.addPolygon(PolyCucei);
 
-        myUbication();
+        Cursor AllMarkers = datos.obtenerMarketLatitudLongitudAll();
+        AllMarkers.moveToFirst();
+        DatabaseUtils.dumpCursor(AllMarkers);
+        while(!AllMarkers.isAfterLast()) {
+            mMap.addMarker(new MarkerOptions().position(new LatLng(AllMarkers.getDouble(AllMarkers.getColumnIndex("Latitud")),
+                    AllMarkers.getDouble(AllMarkers.getColumnIndex("Longitud")))).title(AllMarkers.getString(AllMarkers.getColumnIndex("Titulo")))
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
+            AllMarkers.moveToNext();
+        }
+        AllMarkers.close();
 
+        datos.getDb().close();
+
+        myUbication();
         if (pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
                     .make(RL_FormEmail, "!Bienvenido Buitre!", Snackbar.LENGTH_LONG);
@@ -412,6 +436,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 tb_MakePDF.setChecked(false);
                 tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
                 reporteListo = false;
+                mLatLongReporteActual=null;
             }
         }, 1000);
     }
@@ -628,10 +653,11 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     private void addMarketReport(LatLng coordenadas) {
         CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
         //if(marcador != null) marcador.remove();
-        if (pointInPolygon(coordenadas, poligonoCucei)) {
+        if (pointInPolygon(coordenadas, poligonoCucei)||!pointInPolygon(coordenadas, poligonoCucei)) {
             marcador = mMap.addMarker(new MarkerOptions()
                     .position(coordenadas)
-                    .title("Mi Reporte PICUDG"));
+                    .title(asunto)
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
             mMap.animateCamera(miUbicacion);
         } else {
             Snackbar snackbar = Snackbar
@@ -788,7 +814,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                             .centerCrop()
                             .into(IV_photo);
                     takepic = true;
-                    addMarketReport(mLatLongActual);
+                    mLatLongReporteActual = mLatLongActual;
                     break;
                 case SELECT_PICTURE:
                     IV_photo.setVisibility(View.VISIBLE);
@@ -800,7 +826,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                             .centerCrop()
                             .into(IV_photo);
                     takepic = false;
-                    addMarketReport(mLatLongActual);
+                    mLatLongReporteActual = mLatLongActual;
                     break;
             }
             llenarReporte();

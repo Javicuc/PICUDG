@@ -5,9 +5,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.renderscript.Double2;
 import android.renderscript.Script;
+import android.util.Log;
+import android.util.Pair;
 
 
+import com.google.android.gms.maps.model.LatLng;
 import com.picudg.catapp.picudg.Modelo.CentroEstudio;
 import com.picudg.catapp.picudg.Modelo.Contacto;
 import com.picudg.catapp.picudg.Modelo.Contactos_Ubicacion;
@@ -17,6 +21,8 @@ import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.Ubicacion;
 import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg.Tablas;
+
+import java.util.ArrayList;
 
 /**
  * Created by Javi-cuc on 14/11/2016.
@@ -48,6 +54,12 @@ public final class OperacionesBaseDatos {
             Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD,
             Tablas.USUARIO + "." + InibdPicudg.Usuario.NOMBRE
     };
+    //PROYECCION PARA LLENAR EL RECYCLER
+    private final String[] proyMarketLatitudLongitud = new String[]{
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LATITUD,
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD,
+            Tablas.MARKET + "." + InibdPicudg.Market.TITULO
+    };
     //INNER JOIN PARA CONSULTAR LOS CONTACTOS DE TODAS LAS AREAS
     private static final String CONTACTO_JOIN_UBICACION_ENCARGADOS = "Contacto " +
             "INNER JOIN Contactos_Ubicacion " +
@@ -70,6 +82,11 @@ public final class OperacionesBaseDatos {
             "INNER JOIN Usuario " +
             "ON Reporte.FK_Usuario = usuario.ID_Usuario " +
             "WHERE Usuario.Nombre=?";
+    private static final String MARKET_JOIN_COORDENADAS_ALL = "Market " +
+            "INNER JOIN Reporte " +
+            "ON Market.ID_Market = Reporte.FK_Market " +
+            "INNER JOIN Coordenadas " +
+            "ON Market.ID_Market = Coordenadas.FK_Market ";
 
     /**  OPERACIONES CON CONTACTOS **/
     public String insertarContacto(Contacto nvContacto){
@@ -177,7 +194,7 @@ public final class OperacionesBaseDatos {
         SQLiteDatabase db = baseDatos.getWritableDatabase();
 
         //Generar PK
-        String idCentroEstudio = InibdPicudg.Ubicacion.generarIdUbicacion();
+        String idCentroEstudio = InibdPicudg.CentroEstudio.gemerarIdCentroEstudio();
 
         ContentValues valores = new ContentValues();
         valores.put(InibdPicudg.CentroEstudio.ID_CENTROESTUDIO, idCentroEstudio);
@@ -220,6 +237,13 @@ public final class OperacionesBaseDatos {
         String sql = String.format("SELECT * FROM %s", Tablas.CENTROESTUDIO);
 
         return db.rawQuery(sql, null);
+    }
+    public Cursor obtenerIdCentroEstudio(String acronimo){
+        String[] params = new String[]{acronimo};
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        String sql = "SELECT * FROM " + Tablas.CENTROESTUDIO + " WHERE Acronimo_Centro = ?";
+        return  db.rawQuery(sql,params);
     }
 
     /** OPERACIONES CON LA TABLA INTERMEDIA CONTACTOS-UBICACIONES **/
@@ -291,6 +315,14 @@ public final class OperacionesBaseDatos {
 
         return builder.query(db,proyContactosUbicaciones,null,selectionArgs,null,null,null);
     }
+    public Cursor obtenerIdUbicacion(String nombreUbicacion){
+        String[] params = new String[]{nombreUbicacion};
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        String sql = "SELECT * FROM " + Tablas.UBICACION + " WHERE Nombre = ?";
+
+        return  db.rawQuery(sql,params);
+    }
 
     /** OPERACIONES CON LA TABLA COORDENADAS **/
     public String insertarCoordenadas(Coordenadas coordenadas){
@@ -305,6 +337,7 @@ public final class OperacionesBaseDatos {
         valores.put(InibdPicudg.Coordenadas.FK_UBICACION, coordenadas.fk_Ubicacion);
         valores.put(InibdPicudg.Coordenadas.FK_CENTRO, coordenadas.fk_Centro);
         valores.put(InibdPicudg.Coordenadas.FK_MARKET, coordenadas.fk_Market);
+        valores.put(InibdPicudg.Coordenadas.INSERCION, coordenadas.insercion);
 
         db.insertOrThrow(Tablas.COORDENADAS,null,valores);
 
@@ -319,6 +352,7 @@ public final class OperacionesBaseDatos {
         valores.put(InibdPicudg.Coordenadas.FK_UBICACION, updateCoordenadas.fk_Ubicacion);
         valores.put(InibdPicudg.Coordenadas.FK_CENTRO, updateCoordenadas.fk_Centro);
         valores.put(InibdPicudg.Coordenadas.FK_MARKET, updateCoordenadas.fk_Market);
+        valores.put(InibdPicudg.Coordenadas.INSERCION, updateCoordenadas.insercion);
 
         String whereClause = String.format("%s=?", InibdPicudg.Coordenadas.ID_COORDENADA);
         String[] whereArgs = {updateCoordenadas.idCoordenada};
@@ -342,6 +376,26 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
+    public Cursor obtenerLatidLongitudCentro(String condicion){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+        Cursor id =  obtenerIdCentroEstudio(condicion);
+        id.moveToFirst();
+        String ID_Centro = id.getString(id.getColumnIndex("ID_Centro"));
+
+        String[] params = new String[]{ID_Centro};
+
+        String sql = "SELECT Latitud, Longitud FROM " + Tablas.COORDENADAS + " WHERE FK_Centro = ?" + " ORDER BY "+ InibdPicudg.Coordenadas.INSERCION +" ASC";
+        id.close();
+        return db.rawQuery(sql, params);
+
+    }
+    public Cursor obtnerLatittudLongitudUbicacion(String condicion){
+        String[] params = new String[]{condicion};
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        String sql = "SELECT Latitud, Longitud FROM " + Tablas.COORDENADAS + " WHERE FK_Ubicacion = ?" + " ORDER BY "+ InibdPicudg.Coordenadas.INSERCION +" ASC";
+        return db.rawQuery(sql, params);
+    }
 
     /** OPERACIONES CON LA TABLA REPORTE**/
     public String insertarReportes(Reporte reporte){
@@ -356,6 +410,7 @@ public final class OperacionesBaseDatos {
         valores.put(InibdPicudg.Reporte.REPORTEURI,  reporte.reporteuriReporte);
         valores.put(InibdPicudg.Reporte.FK_USUARIO,  reporte.fk_Usuario);
         valores.put(InibdPicudg.Reporte.FK_MARKET,   reporte.fk_Market);
+        valores.put(InibdPicudg.Reporte.IMAGENURI,   reporte.imagenUri);
 
         db.insertOrThrow(Tablas.REPORTE,null,valores);
 
@@ -365,11 +420,12 @@ public final class OperacionesBaseDatos {
         SQLiteDatabase db = baseDatos.getWritableDatabase();
 
         ContentValues valores = new ContentValues();
-        valores.put(InibdPicudg.Reporte.ASUNTO, updateReporte.asuntoReporte);
+        valores.put(InibdPicudg.Reporte.ASUNTO,      updateReporte.asuntoReporte);
         valores.put(InibdPicudg.Reporte.DESCRIPCION, updateReporte.descripcionReporte);
-        valores.put(InibdPicudg.Reporte.REPORTEURI, updateReporte.reporteuriReporte);
-        valores.put(InibdPicudg.Reporte.FK_USUARIO, updateReporte.fk_Usuario);
-        valores.put(InibdPicudg.Reporte.FK_MARKET, updateReporte.fk_Market);
+        valores.put(InibdPicudg.Reporte.REPORTEURI,  updateReporte.reporteuriReporte);
+        valores.put(InibdPicudg.Reporte.FK_USUARIO,  updateReporte.fk_Usuario);
+        valores.put(InibdPicudg.Reporte.FK_MARKET,   updateReporte.fk_Market);
+        valores.put(InibdPicudg.Reporte.IMAGENURI,   updateReporte.imagenUri);
 
         String whereClause = String.format("%s=?", InibdPicudg.Reporte.ID_REPORTE);
         String[] whereArgs = {updateReporte.idReporte};
@@ -442,6 +498,14 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
+    public Cursor obtenerUsuarioCorreo(String correo){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+        String[] params = new String[]{correo};
+
+        String sql = "SELECT * FROM " + Tablas.USUARIO + " WHERE Correo = ?";
+
+        return db.rawQuery(sql, params);
+    }
 
     /** OPERACIONES CON LA TABLA MARKET **/
     public String insertarMarket(Market market){
@@ -482,6 +546,15 @@ public final class OperacionesBaseDatos {
         int resultado = db.delete(Tablas.MARKET, whereClause, whereArgs);
         return resultado > 0;
     }
+    public boolean eliminarMarketNombre(String nombre){
+        SQLiteDatabase db = baseDatos.getWritableDatabase();
+
+        String whereClause = InibdPicudg.Market.TITULO + "=?";
+        String[] whereArgs = {nombre};
+
+        int resultado = db.delete(Tablas.MARKET, whereClause,whereArgs);
+        return resultado > 0;
+    }
     public Cursor obtenerMarket() {
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
@@ -489,6 +562,7 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
+    //OBTIENE TODOS LOS MARKER RELACIONADOS CON LOS REPORTES DE UN USUARIO, LO USAREMOS EN UN RECYCLERVIEW
     public Cursor obtenerMarketCoordenadas(String usuario){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
@@ -498,6 +572,14 @@ public final class OperacionesBaseDatos {
         builder.setTables(MARKET_JOIN_REPORTE_JOIN_USUARIO_NOMBRE);
 
         return builder.query(db,proyUsuarioReporteMarket,null,selectionArgs,null,null,null);
+    }
+    public Cursor obtenerMarketLatitudLongitudAll(){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        builder.setTables(MARKET_JOIN_COORDENADAS_ALL);
+
+        return builder.query(db,proyMarketLatitudLongitud,null,null,null,null,null);
 
     }
 

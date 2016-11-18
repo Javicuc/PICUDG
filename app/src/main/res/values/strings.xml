@@ -4,7 +4,8 @@
     <string name="title_activity_login">Iniciar Sesion</string>
     <string name="forgot_password">"Para poder restaurar la contraseña de tu cuenta de PICUDG, necesitamos tu correo asociado a la APP."</string>
     <string name="reporte_top">"Necesitas rellenar los campos solicitados para procesar tu reporte en las instalaciones del centro universitario."</string>
-
+    <string name="Terminos">Necesitas rellenar los campos solicitados, para poder utilizar la aplicación dentro de las instalaciones de cualquier centro
+    de estudio dependiente de la UDG.</string>
     <!-- Facebook Strings -->
     <string name="facebook_app_id">971794976298192</string>
 
@@ -114,4 +115,5 @@
         "For example, position the FAB to one side of stream of a cards so the FAB won’t interfere "
         "when a user tries to pick up one of cards.\n\n"
     </string>
+    <string name="title_activity_lista_reportes">lista_reportes</string>
 </resources>
