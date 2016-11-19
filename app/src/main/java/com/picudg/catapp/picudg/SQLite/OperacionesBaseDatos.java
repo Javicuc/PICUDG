@@ -3,6 +3,7 @@ package com.picudg.catapp.picudg.SQLite;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.renderscript.Double2;
@@ -23,6 +24,7 @@ import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg.Tablas;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Javi-cuc on 14/11/2016.
@@ -56,9 +58,12 @@ public final class OperacionesBaseDatos {
     };
     //PROYECCION PARA LLENAR EL RECYCLER
     private final String[] proyMarketLatitudLongitud = new String[]{
-            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LATITUD,
-            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD,
-            Tablas.MARKET + "." + InibdPicudg.Market.TITULO
+            Tablas.MARKET + "." + InibdPicudg.Market.TITULO,
+            Tablas.USUARIO + "." + InibdPicudg.Usuario.NOMBRE,
+            Tablas.USUARIO + "." + InibdPicudg.Usuario.FK_CENTRO,
+            Tablas.REPORTE + "." + InibdPicudg.Reporte.DESCRIPCION,
+            Tablas.REPORTE + "." + InibdPicudg.Reporte.IMAGENURI
+
     };
     //INNER JOIN PARA CONSULTAR LOS CONTACTOS DE TODAS LAS AREAS
     private static final String CONTACTO_JOIN_UBICACION_ENCARGADOS = "Contacto " +
@@ -82,11 +87,13 @@ public final class OperacionesBaseDatos {
             "INNER JOIN Usuario " +
             "ON Reporte.FK_Usuario = usuario.ID_Usuario " +
             "WHERE Usuario.Nombre=?";
-    private static final String MARKET_JOIN_COORDENADAS_ALL = "Market " +
+    private static final String MARKET_JOIN_COORDENADAS_USUARIO_ALL = "Market " +
             "INNER JOIN Reporte " +
             "ON Market.ID_Market = Reporte.FK_Market " +
             "INNER JOIN Coordenadas " +
-            "ON Market.ID_Market = Coordenadas.FK_Market ";
+            "ON Market.ID_Market = Coordenadas.FK_Market " +
+            "INNER JOIN Usuario " +
+            "ON Reporte.FK_Usuario = usuario.ID_Usuario ";
 
     /**  OPERACIONES CON CONTACTOS **/
     public String insertarContacto(Contacto nvContacto){
@@ -449,6 +456,25 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
+    public List<Reporte> obtenerListaReportes(){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+        List<Reporte>  list = new ArrayList<>();
+
+        String sql = String.format("SELECT * FROM %s", Tablas.REPORTE);
+
+        Cursor cursor = db.rawQuery(sql,null);
+
+        cursor.moveToFirst();
+
+        while(!cursor.isAfterLast()){
+            DatabaseUtils.dumpCursor(cursor);
+            Reporte reporte = new Reporte(null,cursor.getString(cursor.getColumnIndex("Asunto")),cursor.getString(cursor.getColumnIndex("Descripcion")),
+                    null,null,null,cursor.getString(cursor.getColumnIndex("Imagen")));
+            list.add(reporte);
+            cursor.moveToNext();
+        }
+        return list;
+    }
 
     /** OPERACIONES CON LA TABLA USUARIO **/
     public String insertarUsuario(Usuario usuario){
@@ -577,7 +603,7 @@ public final class OperacionesBaseDatos {
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
-        builder.setTables(MARKET_JOIN_COORDENADAS_ALL);
+        builder.setTables(MARKET_JOIN_COORDENADAS_USUARIO_ALL);
 
         return builder.query(db,proyMarketLatitudLongitud,null,null,null,null,null);
 

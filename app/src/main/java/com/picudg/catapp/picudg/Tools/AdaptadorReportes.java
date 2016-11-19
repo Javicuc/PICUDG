@@ -9,7 +9,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.R;
+
+import java.util.List;
 
 /**
  * Created by javilubz on 17/11/16.
@@ -17,17 +20,16 @@ import com.picudg.catapp.picudg.R;
 
 public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.ViewHolder>{
 
-    private final Context contexto;
-    private Cursor items;
+    private Context contexto;
+    private List<Reporte> items;
+    //private Cursor items;
 
-    private OnItemClickListener escucha;
-
-    interface OnItemClickListener{
-        public void onClick(ViewHolder holder, int idReporte);
+    public AdaptadorReportes(List<Reporte> items, Context contexto){
+        this.contexto = contexto;
+        this.items    = items;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener{
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         //Referencias UI
         public TextView tvAsunto;
@@ -44,28 +46,6 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
             tvDescripcion = (TextView) v.findViewById(R.id.TV_descripcionCard);
             ivPhoto       = (ImageView) v.findViewById(R.id.IV_photoCard);
         }
-
-        @Override
-        public void onClick(View view) {
-            escucha.onClick(this, obtenerIdReporte(getAdapterPosition()));
-        }
-    }
-
-    private int obtenerIdReporte(int adapterPosition) {
-        if(items != null){
-            if(items.moveToPosition(adapterPosition)){
-                return items.getInt(ConsultaReportes.ID_REPORTE);
-            }else{
-                return -1;
-            }
-        }else{
-            return -1;
-        }
-    }
-
-    public AdaptadorReportes(Context contexto, OnItemClickListener escucha) {
-        this.contexto = contexto;
-        this.escucha = escucha;
     }
 
     @Override
@@ -77,51 +57,27 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        items.moveToPosition(position);
-
-        String s;
+        Reporte item = items.get(position);
+        holder.itemView.setTag(item);
 
         //Asignacion UI
-        s = items.getString(ConsultaReportes.ASUNTO);
-        holder.tvAsunto.setText(s);
+        holder.tvAsunto.setText(item.asuntoReporte);
 
-        s = items.getString(ConsultaReportes.ESCUELA);
-        holder.tvEscuela.setText(s);
+        holder.tvEscuela.setText("CUCEI");
 
-        s = items.getString(ConsultaReportes.EDIFICIO);
+        holder.tvEdificio.setText(item.reporteuriReporte);
 
-        s =  items.getString(ConsultaReportes.DESCRIPCION);
-        holder.tvDescripcion.setText(s);
+        holder.tvDescripcion.setText(item.descripcionReporte);
 
-        s = items.getString(ConsultaReportes.URL);
         Glide.with(contexto)
-                .load(s)
+                .load(item.imagenUri)
                 .centerCrop()
                 .into(holder.ivPhoto);
     }
 
-    interface ConsultaReportes{
-        int ID_REPORTE  = 1;
-        int ASUNTO      = 2;
-        int ESCUELA     = 3;
-        int EDIFICIO    = 4;
-        int DESCRIPCION = 5;
-        int URL         = 6;
-    }
-
     @Override
     public int getItemCount() {
-        if(items != null)
-            return items.getCount();
-        return 0;
+        return items.size();
     }
-    public void swapCursor(Cursor nvCursor) {
-        if(nvCursor != null){
-            items = nvCursor;
-            notifyDataSetChanged();
-        }
-    }
-    public Cursor getCursor(){
-        return items;
-    }
+
 }

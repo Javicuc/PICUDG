@@ -125,7 +125,7 @@ public class Login extends AppCompatActivity{
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        getApplicationContext().deleteDatabase("PICUDG.db");
+        //getApplicationContext().deleteDatabase("PICUDG.db");
         if(!doesDatabaseExist(this,"PICUDG.db"))
             new LoadBD(getApplicationContext()).execute();
 

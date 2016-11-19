@@ -276,7 +276,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         tb_MakePDF.setChecked(false);
         return builder.create();
     }
-
     @SuppressWarnings("MissingPermission")
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;

@@ -175,7 +175,10 @@ public class PicMain extends AppCompatActivity
         bt_listReportes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                Intent actListaReportes = new Intent(PicMain.this, lista_reportes.class);
+                actListaReportes.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                actListaReportes.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                startActivity(actListaReportes);
             }
         });
     }
