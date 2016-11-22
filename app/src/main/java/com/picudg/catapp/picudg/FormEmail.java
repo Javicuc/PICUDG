@@ -31,6 +31,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -72,6 +73,8 @@ import com.picudg.catapp.picudg.Modelo.Coordenadas;
 import com.picudg.catapp.picudg.Modelo.Market;
 import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
+import com.picudg.catapp.picudg.Tools.IfConect;
+import com.picudg.catapp.picudg.Tools.PointInPoly;
 import com.picudg.catapp.picudg.Tools.Report;
 import com.picudg.catapp.picudg.Tools.SendMail;
 
@@ -127,8 +130,11 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     private LatLng mLatLongReporteActual;
     private Marker marcador;
     private CameraUpdate cuceiPos;
-    private Polygon poligonoCucei;
+    private Polygon poligonoCucei,PoligonoEdificio;
+    private List<Polygon> listPoligonos;
     private FirebaseUser user;
+    private List<android.util.Pair> listPolys;
+    PointInPoly inPoly;
     OperacionesBaseDatos datos;
 
     @Override
@@ -149,20 +155,11 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         });
 
         user = FirebaseAuth.getInstance().getCurrentUser();
+        reporteListo = false;
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapForm);
         mapFragment.getMapAsync(this);
-
-        reporteListo = false;
-
-        /** Animacion solo disponible para dispositivos 5.0 en adelante **/
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Explode explode = new Explode();
-            explode.setDuration(2000);
-            getWindow().setEnterTransition(explode);
-            getWindow().setReturnTransition(explode);
-        }
 
         if (myRequestPermission()) {
             BT_photo.setEnabled(true);
@@ -211,11 +208,19 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             @Override
             public void onClick(View view) {
                 if(reporteListo) {
-                    if (isNetDisponible() && isOnlineNet()) {
+                    IfConect conex = new IfConect(getApplicationContext());
+                    if (conex.isNetDisponible() && conex.isOnlineNet()) {
                         enviarmail();
                         send();
                         startMain();
                     } else {
+                        datos = OperacionesBaseDatos
+                                .obtenerInstancia(getApplicationContext());
+                        if (marcador != null) {
+                            datos.eliminarMarketNombre(marcador.getTitle());
+                            marcador.remove();
+                        }
+                        datos.getDb().close();
                         alertConect();
                         startMain();
                     }
@@ -227,7 +232,19 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             }
         });
     }
-
+    public void alertConect(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setIcon(R.drawable.);
+        builder.setTitle("ATENCIÓN");
+        builder.setMessage("¡Verifica tu conexion a internet!");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
+    }
     private AlertDialog llenarReporte() {
         datos = OperacionesBaseDatos
                 .obtenerInstancia(getApplicationContext());
@@ -281,6 +298,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.setMyLocationEnabled(myRequestGPSPermission());
+
         // Agregando un market al mapa
         LatLng mLatLngCucei = new LatLng(20.653910, -103.325807);
         mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
@@ -317,11 +335,18 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             AllMarkers.moveToNext();
         }
         AllMarkers.close();
-
+        listPoligonos = new ArrayList<>();
+        listPolys = datos.obtenerEdificiosCentro("CUCEI");
+        for(int i = 0; i < listPolys.size(); i++) {
+            PoligonoEdificio = mMap.addPolygon((PolygonOptions) listPolys.get(i).first);
+            Log.i("Edificio: ", (String) listPolys.get(i).second);
+            listPoligonos.add(PoligonoEdificio);
+        }
         datos.getDb().close();
 
+        inPoly = new PointInPoly();
         myUbication();
-        if (pointInPolygon(mLatLongActual, poligonoCucei)) {
+        if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
                     .make(RL_FormEmail, "!Bienvenido Buitre!", Snackbar.LENGTH_LONG);
             snackbar.show();
@@ -434,7 +459,16 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 tb_MakePDF.setClickable(true);
                 tb_MakePDF.setChecked(false);
                 tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
-                reporteListo = false;
+                if(takepic) {
+                    File file = new File(mPath);
+                    file.delete();
+                    takepic = false;
+                    getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mPath))));
+                }else if(reporteListo){
+                    File file = new File(mPathPdf);
+                    file.delete();
+                    reporteListo = false;
+                }
                 mLatLongReporteActual=null;
             }
         }, 1000);
@@ -492,10 +526,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         }
     }
     private void ReadPDF(String archivo, Context context){
-        Snackbar snackbar = Snackbar
-                .make(RL_FormEmail, "Leyendo reporte", Snackbar.LENGTH_LONG);
-        snackbar.show();
-
         File wFile = new File(archivo);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(Uri.fromFile(wFile),"application/pdf");
@@ -517,6 +547,13 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         builder.setPositiveButton("Si", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                datos = OperacionesBaseDatos
+                        .obtenerInstancia(getApplicationContext());
+                if (marcador != null) {
+                    datos.eliminarMarketNombre(marcador.getTitle());
+                    marcador.remove();
+                }
+                datos.getDb().close();
                 Intent actMain = new Intent(FormEmail.this, PicMain.class);
                 actMain.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 actMain.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -542,7 +579,10 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.makePDF_MenuMain:
-                Toast.makeText(this, "Crear Reporte", Toast.LENGTH_SHORT).show();
+                if(reporteListo)
+                    ReadPDF(mPathPdf,getApplicationContext());
+                else
+                    Toast.makeText(this, "Crea el reporte", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.ayuda_MenuMain:
                 Toast.makeText(this, "Ayuda", Toast.LENGTH_SHORT).show();
@@ -554,105 +594,16 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 return super.onOptionsItemSelected(item);
         }
     }
-
     @Override
     public void onBackPressed() {
         alertMsg();
         //super.onBackPressed();  // Invoca al método
     }
-    private void alertConect(){
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setIcon(R.drawable.);
-        builder.setTitle("ATENCIÓN");
-        builder.setMessage("¡Verifica tu conexion a internet!");
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.show();
-    }
-    private boolean isNetDisponible() {
-        ConnectivityManager connectivityManager = (ConnectivityManager)
-                getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo actNetInfo = connectivityManager.getActiveNetworkInfo();
-        return (actNetInfo != null && actNetInfo.isConnected());
-    }
-    public Boolean isOnlineNet() {
-        try {
-            Process p = java.lang.Runtime.getRuntime().exec("ping -c 1 www.google.mx");
-            int val           = p.waitFor();
-            boolean reachable = (val == 0);
-            return reachable;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    public boolean pointInPolygon(LatLng point, Polygon polygon) {
-        if (point == null) return false;
-        // ray casting alogrithm http://rosettacode.org/wiki/Ray-casting_algorithm
-        int crossings = 0;
-        List<LatLng> path = polygon.getPoints();
-        path.remove(path.size() - 1); //remove the last point that is added automatically by getPoints()
-        // for each edge
-        for (int i = 0; i < path.size(); i++) {
-            LatLng a = path.get(i);
-            int j = i + 1;
-            //to close the last edge, you have to take the first point of your polygon
-            if (j >= path.size()) {
-                j = 0;
-            }
-            LatLng b = path.get(j);
-            if (rayCrossesSegment(point, a, b)) {
-                crossings++;
-            }
-        }
-        // odd number of crossings?
-        return (crossings % 2 == 1);
-    }
-    public boolean rayCrossesSegment(LatLng point, LatLng a, LatLng b) {
-        // Ray Casting algorithm checks, for each segment, if the point is 1) to the left of the segment and 2) not above nor below the segment. If these two conditions are met, it returns true
-        double px = point.longitude,
-                py = point.latitude,
-                ax = a.longitude,
-                ay = a.latitude,
-                bx = b.longitude,
-                by = b.latitude;
-        if (ay > by) {
-            ax = b.longitude;
-            ay = b.latitude;
-            bx = a.longitude;
-            by = a.latitude;
-        }
-        // alter longitude to cater for 180 degree crossings
-        if (px < 0 || ax < 0 || bx < 0) {
-            px += 360;
-            ax += 360;
-            bx += 360;
-        }
-        // if the point has the same latitude as a or b, increase slightly py
-        if (py == ay || py == by) py += 0.00000001;
-        // if the point is above, below or to the right of the segment, it returns false
-        if ((py > by || py < ay) || (px > Math.max(ax, bx))) {
-            return false;
-        }
-        // if the point is not above, below or to the right and is to the left, return true
-        else if (px < Math.min(ax, bx)) {
-            return true;
-        }
-        // if the two above conditions are not met, you have to compare the slope of segment [a,b] (the red one here) and segment [a,p] (the blue one here) to see if your point is to the left of segment [a,b] or not
-        else {
-            double red = (ax != bx) ? ((by - ay) / (bx - ax)) : Double.POSITIVE_INFINITY;
-            double blue = (ax != px) ? ((py - ay) / (px - ax)) : Double.POSITIVE_INFINITY;
-            return (blue >= red);
-        }
-    }
     private void addMarketReport(LatLng coordenadas) {
         CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
         //if(marcador != null) marcador.remove();
-        if (pointInPolygon(coordenadas, poligonoCucei)||!pointInPolygon(coordenadas, poligonoCucei)) {
+        PointInPoly inPoly = new PointInPoly();
+        if (inPoly.pointInPolygon(coordenadas, poligonoCucei)||!inPoly.pointInPolygon(coordenadas, poligonoCucei)) {
             marcador = mMap.addMarker(new MarkerOptions()
                     .position(coordenadas)
                     .title(asunto)
@@ -829,6 +780,14 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                     break;
             }
             llenarReporte();
+            inPoly = new PointInPoly();
+            for(int i = 0; i < listPoligonos.size(); i++) {
+                if (inPoly.pointInPolygon(mLatLongReporteActual, listPoligonos.get(i))) {
+                    Toast.makeText(this, "Estas en el Edificio: " + listPolys.get(i).second, Toast.LENGTH_LONG).show();
+                    Log.i("Edificio->", (String) listPolys.get(i).second);
+                    break;
+                }
+            }
         }
     }
     @Override

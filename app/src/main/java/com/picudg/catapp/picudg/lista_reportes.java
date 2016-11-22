@@ -1,5 +1,6 @@
 package com.picudg.catapp.picudg;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.os.Bundle;
@@ -14,10 +15,12 @@ import android.util.Log;
 import android.view.View;
 
 import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 import com.picudg.catapp.picudg.Tools.AdaptadorReportes;
+import com.picudg.catapp.picudg.Tools.PicudgApp;
 
 import java.util.List;
 
@@ -27,7 +30,7 @@ public class lista_reportes extends AppCompatActivity {
     private RecyclerView recycler;
     private AdaptadorReportes adapter;
     private RecyclerView.LayoutManager lmanager;
-    private List<Reporte> listaItemsReportes;
+    private List<ReporteCardView> listaItemsReportes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +38,15 @@ public class lista_reportes extends AppCompatActivity {
         setContentView(R.layout.activity_lista_reportes);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent main = new Intent(lista_reportes.this,PicMain.class);
+                startActivity(main);
+                lista_reportes.this.finish();
+            }
+        });
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_Reportes);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -53,7 +65,7 @@ public class lista_reportes extends AppCompatActivity {
                 .obtenerInstancia(getApplicationContext());
 
         listaItemsReportes = datos.obtenerListaReportes();
-        Log.i("items->",listaItemsReportes.get(0).asuntoReporte);
+        Log.i("items->",listaItemsReportes.get(0).AsuntoCard);
 
         recycler = (RecyclerView) findViewById(R.id.lista);
         recycler.setHasFixedSize(true);

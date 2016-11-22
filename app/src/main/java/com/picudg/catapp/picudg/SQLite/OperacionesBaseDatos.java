@@ -8,17 +8,21 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.renderscript.Double2;
 import android.renderscript.Script;
+import android.support.design.widget.TabLayout;
 import android.util.Log;
 import android.util.Pair;
 
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.picudg.catapp.picudg.Modelo.CentroEstudio;
 import com.picudg.catapp.picudg.Modelo.Contacto;
 import com.picudg.catapp.picudg.Modelo.Contactos_Ubicacion;
 import com.picudg.catapp.picudg.Modelo.Coordenadas;
 import com.picudg.catapp.picudg.Modelo.Market;
 import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.Modelo.Ubicacion;
 import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg.Tablas;
@@ -46,24 +50,36 @@ public final class OperacionesBaseDatos {
     /** LISTA DE PROYECCIONES PARA ALGUNAS TABLAS **/
     //PROYECCION DE LOS CONTACTOS (NOMBRE,ROL,CORREO) Y SUS RESPECTIVAS AREAS (NOMBRE)
     private final String[] proyContactosUbicaciones = new String[]{
-            Tablas.CONTACTO + "." + InibdPicudg.Contacto.NOMBRE,
-            InibdPicudg.Contacto.ROL,InibdPicudg.Contacto.CORREO,
+            Tablas.CONTACTO  + "." + InibdPicudg.Contacto.NOMBRE,
+            InibdPicudg.Contacto.ROL,
+            InibdPicudg.Contacto.CORREO,
             Tablas.UBICACION + "." + InibdPicudg.Ubicacion.NOMBRE};
     //PROYECCION DE LOS REPORTES Y MARKETS DE UN USUARIO
     private final String[] proyUsuarioReporteMarket = new String[]{
-            Tablas.REPORTE + "." + InibdPicudg.Reporte.ASUNTO,
+            Tablas.REPORTE     + "." + InibdPicudg.Reporte.ASUNTO,
             Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LATITUD,
             Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD,
-            Tablas.USUARIO + "." + InibdPicudg.Usuario.NOMBRE
+            Tablas.USUARIO     + "." + InibdPicudg.Usuario.NOMBRE
     };
-    //PROYECCION PARA LLENAR EL RECYCLER
-    private final String[] proyMarketLatitudLongitud = new String[]{
-            Tablas.MARKET + "." + InibdPicudg.Market.TITULO,
+    //PROYECCION PARA LLENAR LOS CARDVIEWS DEL RECYCLER
+    private final String[] proyReportesCardView = new String[]{
+            Tablas.MARKET  + "." + InibdPicudg.Market.TITULO,
             Tablas.USUARIO + "." + InibdPicudg.Usuario.NOMBRE,
             Tablas.USUARIO + "." + InibdPicudg.Usuario.FK_CENTRO,
             Tablas.REPORTE + "." + InibdPicudg.Reporte.DESCRIPCION,
             Tablas.REPORTE + "." + InibdPicudg.Reporte.IMAGENURI
-
+    };
+    //PROYECCION PARA LLENAR LOS MARKETS EN EL MAPA
+    private final String[] proyMarketLatitudLongitud = new String[]{
+            Tablas.MARKET      + "." + InibdPicudg.Market.TITULO,
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LATITUD,
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD
+    };
+    //PROYECCION PARA OBTENER LATITUD, LONGITUD, NOMBRE DE LOS EDIFICIOS DE UN CENTRO
+    private final String[] proyCoordenadasUbicacionCentro = new String[]{
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LATITUD,
+            Tablas.COORDENADAS + "." + InibdPicudg.Coordenadas.LONGITUD,
+            Tablas.UBICACION   + "." + InibdPicudg.Ubicacion.NOMBRE
     };
     //INNER JOIN PARA CONSULTAR LOS CONTACTOS DE TODAS LAS AREAS
     private static final String CONTACTO_JOIN_UBICACION_ENCARGADOS = "Contacto " +
@@ -78,22 +94,20 @@ public final class OperacionesBaseDatos {
             "INNER JOIN Ubicacion " +
             "ON ID_Ubicacion = Contactos_Ubicacion.FK_Ubicacion " +
             "WHERE Ubicacion.Nombre=?";
-    //INNER JOIN PARA OBTENER LOS REPORTES, MARKETS DE UN USUARIO
-    private static final String MARKET_JOIN_REPORTE_JOIN_USUARIO_NOMBRE = "Market " +
-            "INNER JOIN Reporte " +
-            "ON Market.ID_Market = Reporte.FK_Market " +
-            "INNER JOIN Coordenadas " +
-            "ON Market.ID_Market = Coordenadas.FK_Market " +
-            "INNER JOIN Usuario " +
-            "ON Reporte.FK_Usuario = usuario.ID_Usuario " +
-            "WHERE Usuario.Nombre=?";
-    private static final String MARKET_JOIN_COORDENADAS_USUARIO_ALL = "Market " +
+    //INNER JOIN PARA OBTENER LOS REPORTES, MARKETS, COORDENADAS DE UN USUARIO
+    private static final String MARKET_JOIN_REPORTE_JOIN_USUARIO = "Market " +
             "INNER JOIN Reporte " +
             "ON Market.ID_Market = Reporte.FK_Market " +
             "INNER JOIN Coordenadas " +
             "ON Market.ID_Market = Coordenadas.FK_Market " +
             "INNER JOIN Usuario " +
             "ON Reporte.FK_Usuario = usuario.ID_Usuario ";
+    //INNER JOIN PARA OBTENER LOS REPORTES, MARKETS, COORDENADAS REGISTRADOS EN LA BD
+    private static final String MARKET_JOIN_COORDENADAS_ALL = "Market " +
+            "INNER JOIN Reporte " +
+            "ON Market.ID_Market = Reporte.FK_Market " +
+            "INNER JOIN Coordenadas " +
+            "ON Market.ID_Market = Coordenadas.FK_Market ";
 
     /**  OPERACIONES CON CONTACTOS **/
     public String insertarContacto(Contacto nvContacto){
@@ -252,6 +266,17 @@ public final class OperacionesBaseDatos {
         String sql = "SELECT * FROM " + Tablas.CENTROESTUDIO + " WHERE Acronimo_Centro = ?";
         return  db.rawQuery(sql,params);
     }
+    public String obtenerNombreCentro(String id){
+        String[] params = new String[]{id};
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+        String nombreCentro = "Desconocido";
+        String sql = "SELECT * FROM " + Tablas.CENTROESTUDIO + " WHERE ID_Centro = ?";
+        Cursor c = db.rawQuery(sql,params);
+        c.moveToFirst();
+        if(c != null)
+            nombreCentro = c.getString(c.getColumnIndex("Acronimo_Centro"));
+        return  nombreCentro;
+    }
 
     /** OPERACIONES CON LA TABLA INTERMEDIA CONTACTOS-UBICACIONES **/
     public String insertarContactosUbicaciones(Contactos_Ubicacion nvCU){
@@ -396,12 +421,49 @@ public final class OperacionesBaseDatos {
         return db.rawQuery(sql, params);
 
     }
-    public Cursor obtnerLatittudLongitudUbicacion(String condicion){
+    public Cursor obtnerLatittudLongitudUbicacionID(String condicion){
         String[] params = new String[]{condicion};
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
         String sql = "SELECT Latitud, Longitud FROM " + Tablas.COORDENADAS + " WHERE FK_Ubicacion = ?" + " ORDER BY "+ InibdPicudg.Coordenadas.INSERCION +" ASC";
         return db.rawQuery(sql, params);
+    }
+
+    public List<Pair> obtenerEdificiosCentro(String centroNombre){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        Cursor idCentro = obtenerIdCentroEstudio(centroNombre);
+        idCentro.moveToFirst();
+
+        String[] selectionArgs = {idCentro.getString(idCentro.getColumnIndex("ID_Centro"))};
+
+        String sql = "SELECT Insercion, Latitud, Longitud, Ubicacion.Nombre FROM " + Tablas.COORDENADAS + " INNER JOIN Ubicacion " +
+                "ON Ubicacion.ID_Ubicacion = Coordenadas.FK_Ubicacion " +
+                "WHERE Ubicacion.FK_Centro =? ORDER BY " + InibdPicudg.Coordenadas.INSERCION + " AND " + InibdPicudg.Ubicacion.NOMBRE +" ASC";
+
+        String tmpUbicacion;
+        List<LatLng> listCoor = new ArrayList<>();
+        List<Pair> listPolys = new ArrayList<>();
+        PolygonOptions mPoly;
+
+        Cursor c = db.rawQuery(sql,selectionArgs);
+        c.moveToFirst();
+        while (!c.isAfterLast()){
+            tmpUbicacion = c.getString(c.getColumnIndex("Nombre"));
+            LatLng mLatLng= new LatLng(c.getDouble(c.getColumnIndex("Latitud")),c.getDouble(c.getColumnIndex("Longitud")));
+            listCoor.add(mLatLng);
+            Log.i("NombreTMP->",tmpUbicacion);
+            if((c.moveToNext() && !tmpUbicacion.equals(c.getString(c.getColumnIndex("Nombre")))) || c.isLast()){
+                mPoly = new PolygonOptions()
+                        .strokeColor(0xE6CC45FF)
+                        .fillColor(0xE6CC45FF);
+                mPoly.addAll(listCoor);
+                Log.i("Flag->",c.getString(c.getColumnIndex("Nombre")));
+                listPolys.add(new Pair(mPoly,tmpUbicacion));
+                listCoor.clear();
+            }
+        }
+        return listPolys;
     }
 
     /** OPERACIONES CON LA TABLA REPORTE**/
@@ -456,22 +518,24 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
-    public List<Reporte> obtenerListaReportes(){
+    public List<ReporteCardView> obtenerListaReportes(){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
-        List<Reporte>  list = new ArrayList<>();
+        List<ReporteCardView>  list = new ArrayList<>();
 
-        String sql = String.format("SELECT * FROM %s", Tablas.REPORTE);
+        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        builder.setTables(MARKET_JOIN_REPORTE_JOIN_USUARIO);
 
-        Cursor cursor = db.rawQuery(sql,null);
+        Cursor c  =  builder.query(db,proyReportesCardView,null,null,null,null,null);
+        c.moveToFirst();
 
-        cursor.moveToFirst();
+        String nombreCentro = obtenerNombreCentro(c.getString(c.getColumnIndex("FK_Centro")));
 
-        while(!cursor.isAfterLast()){
-            DatabaseUtils.dumpCursor(cursor);
-            Reporte reporte = new Reporte(null,cursor.getString(cursor.getColumnIndex("Asunto")),cursor.getString(cursor.getColumnIndex("Descripcion")),
-                    null,null,null,cursor.getString(cursor.getColumnIndex("Imagen")));
+        while(!c.isAfterLast()){
+            DatabaseUtils.dumpCursor(c);
+            ReporteCardView reporte = new ReporteCardView(c.getString(c.getColumnIndex("Titulo")),nombreCentro,
+                    c.getString(c.getColumnIndex("Descripcion")),c.getString(c.getColumnIndex("Imagen")),c.getString(c.getColumnIndex("Nombre")));
             list.add(reporte);
-            cursor.moveToNext();
+            c.moveToNext();
         }
         return list;
     }
@@ -588,22 +652,29 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
-    //OBTIENE TODOS LOS MARKER RELACIONADOS CON LOS REPORTES DE UN USUARIO, LO USAREMOS EN UN RECYCLERVIEW
-    public Cursor obtenerMarketCoordenadas(String usuario){
+
+
+    /** QUERYS ESPECIFICAS
+     * PARA EL FUNCIONAMIENTO DE LA APP **/
+
+    //OBTIENE TODOS LOS MARKER RELACIONADOS CON LOS REPORTES DE UN USUARIO
+    public Cursor obtenerReportesMarketCoordenadas(String usuario){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
         String[] selectionArgs = {usuario};
+        String whereClause = InibdPicudg.Usuario.NOMBRE + "=?";
 
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
-        builder.setTables(MARKET_JOIN_REPORTE_JOIN_USUARIO_NOMBRE);
+        builder.setTables(MARKET_JOIN_REPORTE_JOIN_USUARIO);
 
-        return builder.query(db,proyUsuarioReporteMarket,null,selectionArgs,null,null,null);
+        return builder.query(db,proyUsuarioReporteMarket,whereClause,selectionArgs,null,null,null);
     }
+    //OBTIENE TODOS LOS MARKETS REGISTRADOS EN LA BASE DE DATOS
     public Cursor obtenerMarketLatitudLongitudAll(){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
-        builder.setTables(MARKET_JOIN_COORDENADAS_USUARIO_ALL);
+        builder.setTables(MARKET_JOIN_COORDENADAS_ALL);
 
         return builder.query(db,proyMarketLatitudLongitud,null,null,null,null,null);
 

@@ -177,18 +177,28 @@ public class LoadBD extends AsyncTask<Void, Void, Void> {
         }
 
         // [QUERIES]
-        Log.d("ContactosUbicaciones","UbicacionesUbicaciones");
+        /*
+        Log.i("query1: ","obtenerCentroEstudio");
         DatabaseUtils.dumpCursor(datos.obtenerCentroEstudio());
+        Log.i("query2: ","obtenerUsuarios");
         DatabaseUtils.dumpCursor(datos.obtenerUsuarios());
+        Log.i("query3: ","obtenerCentroUbicaciones");
         DatabaseUtils.dumpCursor(datos.obtenerUbicaciones());
+        Log.i("query4: ","obtenerContactos");
         DatabaseUtils.dumpCursor(datos.obtenerContactos());
+        Log.i("query5: ","obtenerContactosUbicaciones");
         DatabaseUtils.dumpCursor(datos.obtenerContactosUbicaciones());
+        Log.i("query6: ","obtenerContactosUbicacionesNombre");
         DatabaseUtils.dumpCursor(datos.obtenerContactosUbicacionNombre("EDIF_ALFA"));
+        Log.i("query7: ","obtenerCoordenadas");
         DatabaseUtils.dumpCursor(datos.obtenerCoordenadas());
+        Log.i("query8: ","obtenerReportes");
         DatabaseUtils.dumpCursor(datos.obtenerReportes());
+        Log.i("query9: ","obtenerMarkets");
         DatabaseUtils.dumpCursor(datos.obtenerMarket());
-        DatabaseUtils.dumpCursor(datos.obtenerMarketCoordenadas("Javier Alejandro López Rangel"));
-
+        Log.i("query10: ","obtenerReportesMarketCoordenadas");
+        DatabaseUtils.dumpCursor(datos.obtenerReportesMarketCoordenadas("Javier Alejandro López Rangel"));
+        */
         datos.getDb().close();
         return null;
     }
@@ -267,6 +277,11 @@ public class LoadBD extends AsyncTask<Void, Void, Void> {
     }
 
     private void insertarCoordenadasU(OperacionesBaseDatos datos, String ubicacion5) {
+        datos.insertarCoordenadas(new Coordenadas(null,-103.325806,20.658159,ubicacion5,null,null,1));
+        datos.insertarCoordenadas(new Coordenadas(null,-103.325806,20.658058, ubicacion5,null,null,2));
+        datos.insertarCoordenadas(new Coordenadas(null,-103.325107,20.658061,  ubicacion5,null,null,3));
+        datos.insertarCoordenadas(new Coordenadas(null, -103.325119,20.658135,  ubicacion5,null,null,4));
+        datos.insertarCoordenadas(new Coordenadas(null,-103.325806,20.658159,ubicacion5,null,null,5));
     }
 
     private void insertarCoordenadasX(OperacionesBaseDatos datos, String ubicacion4) {
@@ -274,6 +289,7 @@ public class LoadBD extends AsyncTask<Void, Void, Void> {
         datos.insertarCoordenadas(new Coordenadas(null, -103.327255, 20.658288,ubicacion4, null, null, 2));
         datos.insertarCoordenadas(new Coordenadas(null, -103.326683,20.658320,ubicacion4, null, null, 3));
         datos.insertarCoordenadas(new Coordenadas(null, -103.326687,20.658243,ubicacion4, null, null, 4));
+        datos.insertarCoordenadas(new Coordenadas(null, -103.327240, 20.658208,ubicacion4, null, null, 5));
     }
 
     private void insertarCoordenadasV1(OperacionesBaseDatos datos, String ubicacion6) {

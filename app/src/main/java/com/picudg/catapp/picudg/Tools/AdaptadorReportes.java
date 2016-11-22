@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.R;
 
 import java.util.List;
@@ -21,10 +22,10 @@ import java.util.List;
 public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.ViewHolder>{
 
     private Context contexto;
-    private List<Reporte> items;
+    private List<ReporteCardView> items;
     //private Cursor items;
 
-    public AdaptadorReportes(List<Reporte> items, Context contexto){
+    public AdaptadorReportes(List<ReporteCardView> items, Context contexto){
         this.contexto = contexto;
         this.items    = items;
     }
@@ -57,20 +58,20 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Reporte item = items.get(position);
+        ReporteCardView item = items.get(position);
         holder.itemView.setTag(item);
 
         //Asignacion UI
-        holder.tvAsunto.setText(item.asuntoReporte);
+        holder.tvAsunto.setText(item.AsuntoCard);
 
-        holder.tvEscuela.setText("CUCEI");
+        holder.tvEscuela.setText(item.CentroEstudioCard);
 
-        holder.tvEdificio.setText(item.reporteuriReporte);
+        holder.tvEdificio.setText(item.AutorCard);
 
-        holder.tvDescripcion.setText(item.descripcionReporte);
+        holder.tvDescripcion.setText(item.DescripcionCard);
 
         Glide.with(contexto)
-                .load(item.imagenUri)
+                .load(item.ImagenCard)
                 .centerCrop()
                 .into(holder.ivPhoto);
     }

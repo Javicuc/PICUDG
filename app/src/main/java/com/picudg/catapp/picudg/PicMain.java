@@ -24,6 +24,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.transition.Explode;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -38,6 +39,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,11 +69,14 @@ import com.picudg.catapp.picudg.Modelo.Coordenadas;
 import com.picudg.catapp.picudg.Modelo.Market;
 import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.Usuario;
+import com.picudg.catapp.picudg.SQLite.InibdPicudg;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
+import com.picudg.catapp.picudg.Tools.PointInPoly;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -94,7 +99,6 @@ public class PicMain extends AppCompatActivity
 
     private final int MY_PERMISISONS = 100;
     private final int LOCATION_CODE = 400;
-
     private GoogleMap mMap;
     private LatLng mLatLongActual;
     private CameraUpdate cuceiPos;
@@ -102,13 +106,10 @@ public class PicMain extends AppCompatActivity
     private GoogleApiClient mGoogleApiClient;
     private OperacionesBaseDatos datos;
     private FirebaseUser user;
-    private String userName;
-    private String userEmail;
-    private String userCod;
-    private String userSchool;
     private TextView nav_userName;
     private TextView nav_userEmail;
     private ImageView nav_userPhoto;
+    private List<Pair> listPolys;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +119,7 @@ public class PicMain extends AppCompatActivity
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("PICUDG");
         ButterKnife.bind(this);
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -137,50 +139,83 @@ public class PicMain extends AppCompatActivity
         mapFragment.getMapAsync(this);
 
         user = FirebaseAuth.getInstance().getCurrentUser();
-
         navigationInfo();
+
+        querysBD();
 
         if(myRequestPermission()){
             bt_Reportes.setEnabled(true);
-        }
-
-        /** Animacion solo disponible para dispositivos 5.0 en adelante **/
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Explode explode = new Explode();
-            explode.setDuration(2000);
-            getWindow().setEnterTransition(explode);
-            getWindow().setReturnTransition(explode);
+        }else{
+            showExplanation();
         }
 
         bt_Info.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                tutorialApp();
             }
         });
 
         bt_Reportes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(comprobarUsuario()) {
-                    Intent actReporte = new Intent(PicMain.this, FormEmail.class);
-                    actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                    actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                    startActivity(actReporte);
-                }else{
-                    llenarUsuario();
-                }
+                startActReporte();
             }
         });
 
         bt_listReportes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent actListaReportes = new Intent(PicMain.this, lista_reportes.class);
-                actListaReportes.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                actListaReportes.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                startActivity(actListaReportes);
+                startActListReportes();
             }
         });
+    }
+
+    private void startActListReportes() {
+        Intent actListaReportes = new Intent(PicMain.this, lista_reportes.class);
+        actListaReportes.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+        actListaReportes.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(actListaReportes);
+    }
+    private void startActReporte() {
+        if(comprobarUsuario()) {
+            Intent actReporte = new Intent(PicMain.this, FormEmail.class);
+            actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            startActivity(actReporte);
+        }else{
+            llenarUsuario();
+        }
+    }
+    public void querysBD(){
+
+        datos = OperacionesBaseDatos.obtenerInstancia(getApplicationContext());
+        /*
+        Log.i("query1: ","obtenerCentroEstudio");
+        DatabaseUtils.dumpCursor(datos.obtenerCentroEstudio());
+        Log.i("query2: ","obtenerUsuarios");
+        DatabaseUtils.dumpCursor(datos.obtenerUsuarios());
+        Log.i("query3: ","obtenerCentroUbicaciones");
+        DatabaseUtils.dumpCursor(datos.obtenerUbicaciones());
+        Log.i("query4: ","obtenerContactos");
+        DatabaseUtils.dumpCursor(datos.obtenerContactos());
+        Log.i("query5: ","obtenerContactosUbicaciones");
+        DatabaseUtils.dumpCursor(datos.obtenerContactosUbicaciones());
+        Log.i("query6: ","obtenerContactosUbicacionesNombre");
+        DatabaseUtils.dumpCursor(datos.obtenerContactosUbicacionNombre("EDIF_ALFA"));
+        Log.i("query7: ","obtenerCoordenadas");
+        DatabaseUtils.dumpCursor(datos.obtenerCoordenadas());
+        Log.i("query8: ","obtenerReportes");
+        DatabaseUtils.dumpCursor(datos.obtenerReportes());
+        Log.i("query9: ","obtenerMarkets");
+        DatabaseUtils.dumpCursor(datos.obtenerMarket());
+        Log.i("query10: ","obtenerReportesMarketCoordenadas");
+        DatabaseUtils.dumpCursor(datos.obtenerReportesMarketCoordenadas("Javier Alejandro López Rangel"));
+        */
+
+        //DatabaseUtils.dumpCursor(datos.obtenerEdificiosCentro("CUCEI"));
+
+        datos.getDb().close();
     }
     public void navigationInfo(){
         if(user != null){
@@ -191,11 +226,16 @@ public class PicMain extends AppCompatActivity
                             .centerCrop()
                             .override(100, 100)
                             .into(nav_userPhoto);
-                if (userName != null)
-                    nav_userName.setText(userName);
-                else
-                    nav_userName.setText("PICUDG");
+
+                datos = OperacionesBaseDatos.obtenerInstancia(getApplicationContext());
+                Cursor c = datos.obtenerUsuarioCorreo(user.getEmail());
+                c.moveToFirst();
+
+                nav_userName.setText(c.getString(c.getColumnIndex("Nombre")));
                 nav_userEmail.setText(user.getEmail());
+
+                datos.getDb().close();
+                c.close();
             }else{
                 llenarUsuario();
             }
@@ -207,9 +247,7 @@ public class PicMain extends AppCompatActivity
         datos = OperacionesBaseDatos
                 .obtenerInstancia(getApplicationContext());
 
-        userEmail = user.getEmail();
-        Log.i("Correo->",userEmail);
-        Cursor datosUsuario = datos.obtenerUsuarioCorreo(userEmail);
+        Cursor datosUsuario = datos.obtenerUsuarioCorreo(user.getEmail());
         DatabaseUtils.dumpCursor(datosUsuario);
         if(datosUsuario != null && datosUsuario.moveToFirst())
             return true;
@@ -217,6 +255,7 @@ public class PicMain extends AppCompatActivity
         return false;
     }
     private AlertDialog llenarUsuario() {
+
         datos = OperacionesBaseDatos
                 .obtenerInstancia(getApplicationContext());
 
@@ -245,11 +284,16 @@ public class PicMain extends AppCompatActivity
                     if (idCentro != null) {
                         try {
                             datos.getDb().beginTransaction();
+
+                            String userName,userCod,userSchool;
+
                             userSchool = idCentro.getString(idCentro.getColumnIndex("ID_Centro"));
                             userName = tilNombre.getEditText().getText().toString().trim();
                             userCod = tilCodigo.getEditText().getText().toString();
+
                             datos.insertarUsuario(new Usuario(null, userName,
-                                    userEmail, userCod, userSchool));
+                                    user.getEmail(), userCod, userSchool));
+
                             datos.getDb().setTransactionSuccessful();
                         }catch (SQLiteConstraintException e){
                             Toast.makeText(PicMain.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
@@ -257,6 +301,7 @@ public class PicMain extends AppCompatActivity
                             return;
                         }finally{
                             datos.getDb().endTransaction();
+                            navigationInfo();
                         }
                     }
                     idCentro.close();
@@ -268,6 +313,17 @@ public class PicMain extends AppCompatActivity
         });
         dialog.show();
         datos.getDb().close();
+        return builder.create();
+    }
+    private AlertDialog tutorialApp(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(PicMain.this);
+        LayoutInflater inflater = PicMain.this.getLayoutInflater();
+        View v = inflater.inflate(R.layout.dialog_tutorial, null);
+        builder.setView(v);
+
+        final AlertDialog dialog = builder.create();
+
+        dialog.show();
         return builder.create();
     }
     private void startLogin() {
@@ -291,36 +347,9 @@ public class PicMain extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            alertExitMsg();
         }
     }
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.pic_main, menu);
-        return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        if(id == R.id.Delete_PicMain){
-            Toast.makeText(this, "Seleccionaste Delete", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if(id == R.id.ayuda_PicMain){
-            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if(id == R.id.configurar_PicMain){
-            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    */
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -328,9 +357,9 @@ public class PicMain extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_makeReporte) {
-
+            startActReporte();
         } else if (id == R.id.nav_listReportes) {
-
+            startActListReportes();
         } else if (id == R.id.share_fb) {
 
         } else if (id == R.id.share_google) {
@@ -357,15 +386,16 @@ public class PicMain extends AppCompatActivity
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
         mMap.getUiSettings().setMapToolbarEnabled(true);
-
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+        mMap.setMyLocationEnabled(myRequestGPSPermission());
+        /*if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
             mMap.setMyLocationEnabled(true);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
                 mMap.setMyLocationEnabled(true);
             }
-        }
+        }*/
+
         // Agregando un market al mapa
         mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_school_black_36dp)));
@@ -404,7 +434,14 @@ public class PicMain extends AppCompatActivity
         }
         AllMarkers.close();
 
-        if (pointInPolygon(mLatLongActual, poligonoCucei)) {
+        listPolys = datos.obtenerEdificiosCentro("CUCEI");
+        for(int i = 0; i < listPolys.size(); i++)
+            mMap.addPolygon((PolygonOptions) listPolys.get(i).first);
+
+        datos.getDb().close();
+
+        PointInPoly inPoly = new PointInPoly();
+        if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
                     .make(RL_Main, "¡Bienvenido Buitre!", Snackbar.LENGTH_LONG);
             snackbar.show();
@@ -414,65 +451,7 @@ public class PicMain extends AppCompatActivity
             snackbar.show();
         }
     }
-    public boolean pointInPolygon(LatLng point, Polygon polygon) {
-        if (point == null) return false;
-        // ray casting alogrithm http://rosettacode.org/wiki/Ray-casting_algorithm
-        int crossings = 0;
-        List<LatLng> path = polygon.getPoints();
-        path.remove(path.size() - 1); //remove the last point that is added automatically by getPoints()
-        // for each edge
-        for (int i = 0; i < path.size(); i++) {
-            LatLng a = path.get(i);
-            int j = i + 1;
-            //to close the last edge, you have to take the first point of your polygon
-            if (j >= path.size()) {
-                j = 0;
-            }
-            LatLng b = path.get(j);
-            if (rayCrossesSegment(point, a, b)) {
-                crossings++;
-            }
-        }
-        // odd number of crossings?
-        return (crossings % 2 == 1);
-    }
-    public boolean rayCrossesSegment(LatLng point, LatLng a, LatLng b) {
-        // Ray Casting algorithm checks, for each segment, if the point is 1) to the left of the segment and 2) not above nor below the segment. If these two conditions are met, it returns true
-        double px = point.longitude,
-                py = point.latitude,
-                ax = a.longitude,
-                ay = a.latitude,
-                bx = b.longitude,
-                by = b.latitude;
-        if (ay > by) {
-            ax = b.longitude;
-            ay = b.latitude;
-            bx = a.longitude;
-            by = a.latitude;
-        }
-        // alter longitude to cater for 180 degree crossings
-        if (px < 0 || ax < 0 || bx < 0) {
-            px += 360;
-            ax += 360;
-            bx += 360;
-        }
-        // if the point has the same latitude as a or b, increase slightly py
-        if (py == ay || py == by) py += 0.00000001;
-        // if the point is above, below or to the right of the segment, it returns false
-        if ((py > by || py < ay) || (px > Math.max(ax, bx))) {
-            return false;
-        }
-        // if the point is not above, below or to the right and is to the left, return true
-        else if (px < Math.min(ax, bx)) {
-            return true;
-        }
-        // if the two above conditions are not met, you have to compare the slope of segment [a,b] (the red one here) and segment [a,p] (the blue one here) to see if your point is to the left of segment [a,b] or not
-        else {
-            double red = (ax != bx) ? ((by - ay) / (bx - ax)) : Double.POSITIVE_INFINITY;
-            double blue = (ax != px) ? ((py - ay) / (px - ax)) : Double.POSITIVE_INFINITY;
-            return (blue >= red);
-        }
-    }
+
     private void updatePosition(Location location) {
         if (location != null) {
             mLatLongActual = new LatLng(location.getLatitude(), location.getLongitude());
@@ -483,17 +462,14 @@ public class PicMain extends AppCompatActivity
         public void onLocationChanged(Location location) {
             updatePosition(location);
         }
-
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
 
         }
-
         @Override
         public void onProviderEnabled(String provider) {
 
         }
-
         @Override
         public void onProviderDisabled(String provider) {
 
@@ -635,5 +611,33 @@ public class PicMain extends AppCompatActivity
         mGoogleApiClient.connect();
         super.onStart();
     }
+
+    /*
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.pic_main, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        if(id == R.id.Delete_PicMain){
+            Toast.makeText(this, "Seleccionaste Delete", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if(id == R.id.ayuda_PicMain){
+            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if(id == R.id.configurar_PicMain){
+            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    */
 
 }

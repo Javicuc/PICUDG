@@ -317,7 +317,7 @@ public class Login extends AppCompatActivity{
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
-    @SuppressWarnings("MissingPermission")
+    @SuppressWarnings("MissingPermission") //ADAPTADOR PARA EL AUTOCOMPLETADO DE CORREOS ELECTRONICOS
     private ArrayAdapter<String> getEmailAddressAdapter(Context context) {
         Account[] accounts = AccountManager.get(context).getAccounts();
         String[] addresses = new String[accounts.length];

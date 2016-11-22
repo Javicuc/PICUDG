@@ -33,7 +33,7 @@ public class InibdPicudg {
         String FK_UBICACION  = "FK_Ubicacion";
         String FK_CENTRO     = "FK_Centro";
         String FK_MARKET     = "FK_Market";
-        String INSERCION     = "INSERCION";
+        String INSERCION     = "Insercion";
     }
 
     interface ColumnasMarket  {

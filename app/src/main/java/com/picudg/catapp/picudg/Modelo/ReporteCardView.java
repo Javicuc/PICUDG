@@ -6,11 +6,11 @@ package com.picudg.catapp.picudg.Modelo;
 
 public class ReporteCardView {
 
-    private String AsuntoCard;
-    private String CentroEstudioCard;
-    private String DescripcionCard;
-    private String ImagenCard;
-    private String AutorCard;
+    public String AsuntoCard;
+    public String CentroEstudioCard;
+    public String DescripcionCard;
+    public String ImagenCard;
+    public String AutorCard;
 
     public ReporteCardView (String Asunto, String Centro, String Descripcion,
                                  String Uri, String Autor){

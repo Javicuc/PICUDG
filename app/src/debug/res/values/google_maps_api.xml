@@ -16,16 +16,15 @@
     string in this file.
     -->
 
-    <!-- CLAVE API de la laptop
+    <!-- CLAVE API de la laptop -->
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
          AIzaSyDZHFhEiauQ0yFtjPQv8tFVmGQgR6qJwQM
     </string>
 
-    -->
 
-    <!-- Nota: si deseamos usar correctamente la aplicacion, debemos generar otra clave de api, a partir de nuestra llave SHA-1 en androidclc -->
+    <!-- Nota: si deseamos usar correctamente la aplicacion, debemos generar otra clave de api, a partir de nuestra llave SHA-1 en androidclc
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
          AIzaSyAgbFtBdlnYjb134kej-arEgILVK-IwYbA
     </string>
-
+    -->
 </resources>
