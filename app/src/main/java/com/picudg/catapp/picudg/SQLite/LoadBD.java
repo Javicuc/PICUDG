@@ -14,6 +14,9 @@ import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.Ubicacion;
 import com.picudg.catapp.picudg.Modelo.Usuario;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by javilubz on 17/11/16.
  */
@@ -90,8 +93,13 @@ public class LoadBD extends AsyncTask<Void, Void, Void> {
             String market1 = datos.insertarMarket(new Market(null,null,"Reporte","Socket Mal Puesto"));
             String market2 = datos.insertarMarket(new Market(null,null,"Reporte","Fuga De Agua"));
             /** INSERTAR REPORTES **/
-            String reporte1 = datos.insertarReportes(new Reporte(null,"Socket Mal Puesto","El socket esta mal puesto",null,usuario1,market1,null));
-            String reporte2 = datos.insertarReportes(new Reporte(null,"Fuga De Agua","Hay una fuga de agua en el X",null,usuario1,market2,null));
+            Date date = new Date();
+            SimpleDateFormat ft =
+                    new SimpleDateFormat ("yyyy/MM/dd, hh:mm:ss");
+            String reporte1 = datos.insertarReportes(new Reporte(null,"Socket Mal Puesto!","El socket que esta ubicado, en la fila pegada a la ventana del escritorio del profesor" +
+                    " esta mal puesto, por lo tanto no permite la carga de dispositivos electronicos.", null,usuario1,market1,null,ft.format(date).toString(),"EDIF_ALFA"));
+            String reporte2 = datos.insertarReportes(new Reporte(null,"Fuga De Agua","Hay una fuga de agua en el X. En el baño de los hombres hay una pequeña fuga de agua en" +
+                    "uno de los lavamanos, se necesita con urgencia una reparacion.", null,usuario1,market2,null,ft.format(date).toString(),"EDIF_X"));
 
 
             /** RELACIONAR UBICACIONES CON SUS RESPECTIVOS CONTACTOS **/
@@ -162,8 +170,6 @@ public class LoadBD extends AsyncTask<Void, Void, Void> {
             /** INSERTA MARKET DE EJEMPLO **/
             datos.insertarCoordenadas(new Coordenadas(null, -103.325045, 20.656525,null,null,market1,1));
             datos.insertarCoordenadas(new Coordenadas(null, -103.327255, 20.658288,null,null,market2,2));
-
-            datos.eliminarMarket(market2);
 
             // Eliminación Contacto
             datos.eliminarContacto(contacto4);

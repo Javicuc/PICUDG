@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.vision.text.Text;
 import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.R;
@@ -33,19 +34,25 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         //Referencias UI
-        public TextView tvAsunto;
-        public TextView tvEscuela;
-        public TextView tvDescripcion;
-        public TextView tvEdificio;
+        public TextView  tvAsunto;
+        public TextView  tvEscuela;
+        public TextView  tvDescripcion;
+        public TextView  tvEdificio;
         public ImageView ivPhoto;
+        public TextView  tvAutor;
+        public TextView  tvFecha;
 
         public ViewHolder(View v){
             super(v);
-            tvAsunto      = (TextView) v.findViewById(R.id.TV_asuntoCard);
-            tvEscuela     = (TextView) v.findViewById(R.id.TV_escuelaCard);
-            tvEdificio    = (TextView) v.findViewById(R.id.TV_edificioCard);
-            tvDescripcion = (TextView) v.findViewById(R.id.TV_descripcionCard);
+
+            tvAsunto      = (TextView)  v.findViewById(R.id.TV_asuntoCard);
+            tvEdificio    = (TextView)  v.findViewById(R.id.TV_edificioCard);
+            tvEscuela     = (TextView)  v.findViewById(R.id.TV_escuelaCard);
+            tvDescripcion = (TextView)  v.findViewById(R.id.TV_descripcionCard);
             ivPhoto       = (ImageView) v.findViewById(R.id.IV_photoCard);
+            tvAutor       = (TextView)  v.findViewById(R.id.TV_autorCard);
+            tvFecha       = (TextView)  v.findViewById(R.id.TV_fechaCard);
+
         }
     }
 
@@ -66,9 +73,13 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
 
         holder.tvEscuela.setText(item.CentroEstudioCard);
 
-        holder.tvEdificio.setText(item.AutorCard);
+        holder.tvEdificio.setText(item.EdificioCard);
 
         holder.tvDescripcion.setText(item.DescripcionCard);
+
+        holder.tvAutor.setText(item.AutorCard);
+
+        holder.tvFecha.setText(item.FechaCard);
 
         Glide.with(contexto)
                 .load(item.ImagenCard)

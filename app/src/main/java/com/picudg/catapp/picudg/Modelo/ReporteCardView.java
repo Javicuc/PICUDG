@@ -8,18 +8,22 @@ public class ReporteCardView {
 
     public String AsuntoCard;
     public String CentroEstudioCard;
+    public String EdificioCard;
     public String DescripcionCard;
     public String ImagenCard;
     public String AutorCard;
+    public String FechaCard;
 
-    public ReporteCardView (String Asunto, String Centro, String Descripcion,
-                                 String Uri, String Autor){
+    public ReporteCardView (String Asunto, String Centro,String Edificio, String Descripcion,
+                                 String Uri, String Autor, String Fecha){
 
-        this.AsuntoCard = Asunto;
+        this.AsuntoCard        = Asunto;
         this.CentroEstudioCard = Centro;
-        this.DescripcionCard = Descripcion;
-        this.ImagenCard = Uri;
-        this.AutorCard = Autor;
+        this.EdificioCard      = Edificio;
+        this.DescripcionCard   = Descripcion;
+        this.ImagenCard        = Uri;
+        this.AutorCard         = Autor;
+        this.FechaCard         = Fecha;
 
     }
 

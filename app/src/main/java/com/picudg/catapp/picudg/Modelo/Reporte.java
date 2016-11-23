@@ -13,9 +13,11 @@ public class Reporte {
     public String fk_Usuario;
     public String fk_Market;
     public String imagenUri;
+    public String fecha;
+    public String ubicacion;
 
     public Reporte(String ID, String Asunto, String Descripcion, String URI,
-                   String fkUsuario, String fkMarket, String imgUri){
+                   String fkUsuario, String fkMarket, String imgUri,String Fecha, String Ubicacion){
 
         this.idReporte          = ID;
         this.asuntoReporte      = Asunto;
@@ -24,6 +26,8 @@ public class Reporte {
         this.fk_Usuario         = fkUsuario;
         this.fk_Market          = fkMarket;
         this.imagenUri          = imgUri;
+        this.fecha              = Fecha;
+        this.ubicacion          = Ubicacion;
 
     }
 }

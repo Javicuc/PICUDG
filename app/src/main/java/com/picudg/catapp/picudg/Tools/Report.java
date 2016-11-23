@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -40,11 +41,16 @@ import java.util.Date;
 public class Report extends AsyncTask<Void, Void, Void> {
 
     private Context context;
-    private String mPathPdf;
-    private String fAsunto;
-    private String fDescripcion;
-    private Image userImage;
-    private byte[] imageInByte;
+    private String  mPathPdf;
+    private Image   userImage;
+    private byte[]  imageInByte;
+
+    private String  alumno;
+    private String  edificio;
+    private String  centroEstudio;
+    private String  fAsunto;
+    private String  fDescripcion;
+
     //Progressdialog para mostrar el estado del envio
     private ProgressDialog progressDialog;
 
@@ -77,6 +83,8 @@ public class Report extends AsyncTask<Void, Void, Void> {
 
         final Document New_Document = new Document();
         Date date = new Date();
+        SimpleDateFormat ft =
+                new SimpleDateFormat ("yyyy/MM/dd, hh:mm:ss");
 
         File New_File = new File(mPathPdf);
         if (New_File.exists()) {
@@ -128,7 +136,7 @@ public class Report extends AsyncTask<Void, Void, Void> {
             pdet.add(new Phrase(Chunk.NEWLINE));
             pdet.add(new Phrase("Departamento de Ciencias Basicas, Jorge Zamudio Hernandez.", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
-            pdet.add(new Phrase(date.toString() + ", DEDX-A015", fontContenido));
+            pdet.add(new Phrase(ft.format(date).toString() + ", DEDX-A015", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
             pdet.add(new Phrase(Chunk.NEWLINE));
             New_Document.add(pdet);

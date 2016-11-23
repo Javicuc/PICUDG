@@ -26,6 +26,7 @@ import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.Modelo.Ubicacion;
 import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg.Tablas;
+import com.picudg.catapp.picudg.Tools.Report;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,9 @@ public final class OperacionesBaseDatos {
             Tablas.USUARIO + "." + InibdPicudg.Usuario.NOMBRE,
             Tablas.USUARIO + "." + InibdPicudg.Usuario.FK_CENTRO,
             Tablas.REPORTE + "." + InibdPicudg.Reporte.DESCRIPCION,
-            Tablas.REPORTE + "." + InibdPicudg.Reporte.IMAGENURI
+            Tablas.REPORTE + "." + InibdPicudg.Reporte.IMAGENURI,
+            Tablas.REPORTE + "." + InibdPicudg.Reporte.FECHA,
+            Tablas.REPORTE + "." + InibdPicudg.Reporte.UBICACION
     };
     //PROYECCION PARA LLENAR LOS MARKETS EN EL MAPA
     private final String[] proyMarketLatitudLongitud = new String[]{
@@ -411,13 +414,16 @@ public final class OperacionesBaseDatos {
     public Cursor obtenerLatidLongitudCentro(String condicion){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
         Cursor id =  obtenerIdCentroEstudio(condicion);
+        String ID_Centro;
+        String[] params = new String[0];
         id.moveToFirst();
-        String ID_Centro = id.getString(id.getColumnIndex("ID_Centro"));
-
-        String[] params = new String[]{ID_Centro};
-
+        if(id!=null) {
+            ID_Centro = id.getString(id.getColumnIndex("ID_Centro"));
+            params = new String[]{ID_Centro};
+        }
         String sql = "SELECT Latitud, Longitud FROM " + Tablas.COORDENADAS + " WHERE FK_Centro = ?" + " ORDER BY "+ InibdPicudg.Coordenadas.INSERCION +" ASC";
         id.close();
+
         return db.rawQuery(sql, params);
 
     }
@@ -428,7 +434,6 @@ public final class OperacionesBaseDatos {
         String sql = "SELECT Latitud, Longitud FROM " + Tablas.COORDENADAS + " WHERE FK_Ubicacion = ?" + " ORDER BY "+ InibdPicudg.Coordenadas.INSERCION +" ASC";
         return db.rawQuery(sql, params);
     }
-
     public List<Pair> obtenerEdificiosCentro(String centroNombre){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
@@ -480,6 +485,8 @@ public final class OperacionesBaseDatos {
         valores.put(InibdPicudg.Reporte.FK_USUARIO,  reporte.fk_Usuario);
         valores.put(InibdPicudg.Reporte.FK_MARKET,   reporte.fk_Market);
         valores.put(InibdPicudg.Reporte.IMAGENURI,   reporte.imagenUri);
+        valores.put(InibdPicudg.Reporte.FECHA,       reporte.fecha);
+        valores.put(InibdPicudg.Reporte.UBICACION,   reporte.ubicacion);
 
         db.insertOrThrow(Tablas.REPORTE,null,valores);
 
@@ -533,7 +540,8 @@ public final class OperacionesBaseDatos {
         while(!c.isAfterLast()){
             DatabaseUtils.dumpCursor(c);
             ReporteCardView reporte = new ReporteCardView(c.getString(c.getColumnIndex("Titulo")),nombreCentro,
-                    c.getString(c.getColumnIndex("Descripcion")),c.getString(c.getColumnIndex("Imagen")),c.getString(c.getColumnIndex("Nombre")));
+                    c.getString(c.getColumnIndex("Descripcion")),c.getString(c.getColumnIndex("Ubicacion")),
+                    c.getString(c.getColumnIndex("Imagen")),c.getString(c.getColumnIndex("Nombre")),c.getString(c.getColumnIndex("Fecha")));
             list.add(reporte);
             c.moveToNext();
         }
@@ -651,6 +659,18 @@ public final class OperacionesBaseDatos {
         String sql = String.format("SELECT * FROM %s", Tablas.MARKET);
 
         return db.rawQuery(sql, null);
+    }
+    public int obtenerCountMarkets() {
+        String countQuery = "SELECT  * FROM " + Tablas.COORDENADAS + " WHERE FK_Market is NOT NULL";
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+        int cnt = 0;
+
+        Cursor cursor = db.rawQuery(countQuery,null);
+        if(cursor.getCount() > 0){
+            cnt = cursor.getCount();
+        }
+        cursor.close();
+        return cnt;
     }
 
 

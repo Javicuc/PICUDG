@@ -38,6 +38,7 @@ public class lista_reportes extends AppCompatActivity {
         setContentView(R.layout.activity_lista_reportes);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbar.setTitle("Reportes");
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,7 +48,7 @@ public class lista_reportes extends AppCompatActivity {
                 lista_reportes.this.finish();
             }
         });
-
+        /*
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_Reportes);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,6 +57,7 @@ public class lista_reportes extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        */
         inicializarRecicler();
     }
 

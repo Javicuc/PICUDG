@@ -116,11 +116,11 @@ public class BaseDatosPicudg extends SQLiteOpenHelper{
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL, %s TEXT NOT NULL, %s TEXT," +
-                "%s TEXT NOT NULL %s ON DELETE CASCADE,%s TEXT NOT NULL %s ON DELETE CASCADE, %s TEXT)",
+                "%s TEXT NOT NULL %s ON DELETE CASCADE,%s TEXT NOT NULL %s ON DELETE CASCADE, %s TEXT, %s TEXT, %s TEXT)",
                 Tablas.REPORTE, BaseColumns._ID,
                 Reporte.ID_REPORTE, Reporte.ASUNTO, Reporte.DESCRIPCION, Reporte.REPORTEURI,
                 Reporte.FK_USUARIO, Referencias.ID_USUARIO,
-                Reporte.FK_MARKET, Referencias.ID_MARKET, Reporte.IMAGENURI));
+                Reporte.FK_MARKET, Referencias.ID_MARKET, Reporte.IMAGENURI, Reporte.FECHA, Reporte.UBICACION));
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "%s TEXT UNIQUE NOT NULL,%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL %s ON DELETE CASCADE)",

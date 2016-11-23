@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteConstraintException;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
@@ -80,7 +81,9 @@ import com.picudg.catapp.picudg.Tools.SendMail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 import butterknife.BindView;
@@ -123,8 +126,9 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     private String mPathPdf;
     private String mPath;
     private Uri pathuri;
-    boolean takepic;
-    boolean reporteListo;
+    private boolean takepic;
+    private boolean reporteListo;
+    private String EdificioActual;
     private GoogleMap mMap;
     private LatLng mLatLongActual;
     private LatLng mLatLongReporteActual;
@@ -134,8 +138,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     private List<Polygon> listPoligonos;
     private FirebaseUser user;
     private List<android.util.Pair> listPolys;
-    PointInPoly inPoly;
-    OperacionesBaseDatos datos;
+    private PointInPoly inPoly;
+    private OperacionesBaseDatos datos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +147,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         setContentView(R.layout.activity_form_email);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(null);
+        getSupportActionBar().setTitle("Crear Reporte");
         //setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         ButterKnife.bind(this);
 
@@ -268,20 +272,46 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 descripcion = tilDescripcion.getEditText().getText().toString().trim();
 
                 if (validaCampos(asunto) && validaCampos(descripcion)) {
+
                     WritePDF();
+
+                    Date date = new Date();
+                    SimpleDateFormat ft =
+                            new SimpleDateFormat ("yyyy/MM/dd, hh:mm:ss");
                     addMarketReport(mLatLongReporteActual);
                     String idMarkerTMP = datos.insertarMarket(new Market(null,null,"Reporte",asunto));
+
                     Cursor idUsuarioTMP = datos.obtenerUsuarioCorreo(user.getEmail());
                     idUsuarioTMP.moveToFirst();
                     DatabaseUtils.dumpCursor(idUsuarioTMP);
-                    datos.insertarReportes(new Reporte(null,asunto,descripcion,mPathPdf,
-                            idUsuarioTMP.getString(idUsuarioTMP.getColumnIndex("ID_Usuario")),idMarkerTMP,String.valueOf(takepic?mPath:pathuri)));
-                    datos.insertarCoordenadas(new Coordenadas(null,mLatLongReporteActual.longitude,mLatLongReporteActual.latitude,null,null,idMarkerTMP,2));
-                    tb_MakePDF.setClickable(false);
-                    tb_MakePDF.setChecked(true);
-                    tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.accent));
-                    reporteListo = true;
+                    if(idUsuarioTMP != null){
+                        try {
+                            datos.getDb().beginTransaction();
+
+                            datos.insertarReportes(new Reporte(null, asunto, descripcion, mPathPdf,
+                                    idUsuarioTMP.getString(idUsuarioTMP.getColumnIndex("ID_Usuario")), idMarkerTMP,
+                                    String.valueOf(takepic ? mPath : pathuri), ft.format(date).toString(), EdificioActual));
+
+                            datos.insertarCoordenadas(new Coordenadas(null, mLatLongReporteActual.longitude, mLatLongReporteActual.latitude,
+                                    null, null, idMarkerTMP, datos.obtenerCountMarkets()));
+
+                            datos.getDb().setTransactionSuccessful();
+                        } catch (SQLiteConstraintException e){
+                            Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
+                            Log.d("Insertar Usuario->", "Fallo al insertar: ,", e);
+                        }finally {
+                            tb_MakePDF.setClickable(false);
+                            tb_MakePDF.setChecked(true);
+                            tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.accent));
+                            reporteListo = true;
+                            datos.getDb().endTransaction();
+                        }
+                    } else {
+                        Toast.makeText(FormEmail.this, "¡Fallo al comprobar autentificación!", Toast.LENGTH_LONG).show();
+                    }
+
                     dialog.dismiss();
+
                 } else {
                     Toast.makeText(FormEmail.this, "Datos inconclusos o no validos", Toast.LENGTH_SHORT).show();
                 }
@@ -348,7 +378,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         myUbication();
         if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
-                    .make(RL_FormEmail, "!Bienvenido Buitre!", Snackbar.LENGTH_LONG);
+                    .make(RL_FormEmail, "!Bienvenido!", Snackbar.LENGTH_LONG);
             snackbar.show();
         } else {
             Snackbar snackbar = Snackbar
@@ -784,6 +814,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             for(int i = 0; i < listPoligonos.size(); i++) {
                 if (inPoly.pointInPolygon(mLatLongReporteActual, listPoligonos.get(i))) {
                     Toast.makeText(this, "Estas en el Edificio: " + listPolys.get(i).second, Toast.LENGTH_LONG).show();
+                    EdificioActual = listPolys.get(i).second.toString();
                     Log.i("Edificio->", (String) listPolys.get(i).second);
                     break;
                 }

@@ -50,6 +50,8 @@ public class InibdPicudg {
         String FK_USUARIO   = "FK_Usuario";
         String FK_MARKET    = "FK_Market";
         String IMAGENURI    = "Imagen";
+        String FECHA        = "Fecha";
+        String UBICACION    = "Ubicacion";
     }
     interface ColumnasUbicacion  {
         String ID_UBICACION = "ID_Ubicacion";

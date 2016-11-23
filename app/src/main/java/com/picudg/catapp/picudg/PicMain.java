@@ -70,6 +70,7 @@ import com.picudg.catapp.picudg.Modelo.Market;
 import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg;
+import com.picudg.catapp.picudg.SQLite.LoadBD;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 import com.picudg.catapp.picudg.Tools.PointInPoly;
 
@@ -119,7 +120,6 @@ public class PicMain extends AppCompatActivity
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("PICUDG");
         ButterKnife.bind(this);
-
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -319,8 +319,13 @@ public class PicMain extends AppCompatActivity
         final AlertDialog.Builder builder = new AlertDialog.Builder(PicMain.this);
         LayoutInflater inflater = PicMain.this.getLayoutInflater();
         View v = inflater.inflate(R.layout.dialog_tutorial, null);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
         builder.setView(v);
-
         final AlertDialog dialog = builder.create();
 
         dialog.show();
@@ -379,6 +384,7 @@ public class PicMain extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+    @SuppressWarnings("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -443,7 +449,7 @@ public class PicMain extends AppCompatActivity
         PointInPoly inPoly = new PointInPoly();
         if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
             Snackbar snackbar = Snackbar
-                    .make(RL_Main, "¡Bienvenido Buitre!", Snackbar.LENGTH_LONG);
+                    .make(RL_Main, "¡Bienvenido!", Snackbar.LENGTH_LONG);
             snackbar.show();
         } else {
             Snackbar snackbar = Snackbar
