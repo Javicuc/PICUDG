@@ -5,6 +5,6 @@ package com.picudg.catapp.picudg.Tools;
  */
 
 public class Config {
-    public static final String EMAIL = "picudg@gmail.com";
-    public static final String PASSWORD = "$passcuc**16B";
+    public static final String EMAIL = "correo";
+    public static final String PASSWORD = "passwordcorreo";
 }
