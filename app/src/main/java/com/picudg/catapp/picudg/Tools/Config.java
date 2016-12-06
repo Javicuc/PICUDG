@@ -5,6 +5,7 @@ package com.picudg.catapp.picudg.Tools;
  */
 
 public class Config {
+    //CORREO, SERA ENCARGADO DE ENVIAR LOS REPORTES A LAS DEPENDENCIAS
     public static final String EMAIL = "correo";
     public static final String PASSWORD = "passwordcorreo";
 }
