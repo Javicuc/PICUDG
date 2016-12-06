@@ -15,6 +15,7 @@ import android.util.Pair;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.picudg.catapp.picudg.Modelo.CentroEstudio;
 import com.picudg.catapp.picudg.Modelo.Contacto;
@@ -53,8 +54,9 @@ public final class OperacionesBaseDatos {
     private final String[] proyContactosUbicaciones = new String[]{
             Tablas.CONTACTO  + "." + InibdPicudg.Contacto.NOMBRE,
             InibdPicudg.Contacto.ROL,
-            InibdPicudg.Contacto.CORREO,
-            Tablas.UBICACION + "." + InibdPicudg.Ubicacion.NOMBRE};
+            InibdPicudg.Contacto.CORREO};
+            //Tablas.UBICACION + "." + InibdPicudg.Ubicacion.NOMBRE};
+
     //PROYECCION DE LOS REPORTES Y MARKETS DE UN USUARIO
     private final String[] proyUsuarioReporteMarket = new String[]{
             Tablas.REPORTE     + "." + InibdPicudg.Reporte.ASUNTO,
@@ -340,10 +342,10 @@ public final class OperacionesBaseDatos {
         return builder.query(db, proyContactosUbicaciones, null, null, null, null, null);
     }
     // OBTENEMOS LOS CONTACTOS DE UNA RESPECTIVA AREA
-    public Cursor obtenerContactosUbicacionNombre(String Nombre){
+    public Cursor obtenerContactosUbicacionEdificio(String edificio){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
-        String[] selectionArgs = {Nombre};
+        String[] selectionArgs = {edificio};
 
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
         builder.setTables(CONTACTO_JOIN_UBICACION_ENCARGADOS_CONDICION);
@@ -411,13 +413,13 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, null);
     }
-    public Cursor obtenerLatidLongitudCentro(String condicion){
+    public Cursor obtenerLatidLongitudCentro(String acronimo){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
-        Cursor id =  obtenerIdCentroEstudio(condicion);
+        Cursor id =  obtenerIdCentroEstudio(acronimo);
         String ID_Centro;
         String[] params = new String[0];
         id.moveToFirst();
-        if(id!=null) {
+        if(id != null) {
             ID_Centro = id.getString(id.getColumnIndex("ID_Centro"));
             params = new String[]{ID_Centro};
         }
@@ -426,6 +428,38 @@ public final class OperacionesBaseDatos {
 
         return db.rawQuery(sql, params);
 
+    }
+    //OBTENEMOS LOS POLIGONOS DE TODOS LOS CENTROS DE ESTUDIO, Y SU ACRONIMO
+    public List<Pair> obtenerPoligonosCentros(){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        List<LatLng> listCoor = new ArrayList<>();
+        List<Pair> listPolys = new ArrayList<>();
+        PolygonOptions mPoly;
+        String tmpAcronimo;
+
+        String sql = "SELECT Insercion, Latitud, Longitud, CentroEstudio.Acronimo_Centro FROM " + Tablas.COORDENADAS + " INNER JOIN " + Tablas.CENTROESTUDIO +
+                " ON Coordenadas.FK_Centro = ID_Centro ORDER BY " + InibdPicudg.Coordenadas.INSERCION + " AND "+ InibdPicudg.CentroEstudio.ACRONIMO +" ASC";
+        Cursor c = db.rawQuery(sql,null);
+        c.moveToFirst();
+        if(c != null){
+            while (!c.isAfterLast()){
+                tmpAcronimo = c.getString(c.getColumnIndex("Acronimo_Centro"));
+                LatLng mLatLng= new LatLng(c.getDouble(c.getColumnIndex("Latitud")),c.getDouble(c.getColumnIndex("Longitud")));
+                listCoor.add(mLatLng);
+                Log.i("Flag2->",c.getString(c.getColumnIndex("Acronimo_Centro")));
+                if((c.moveToNext() && !tmpAcronimo.equals(c.getString(c.getColumnIndex("Acronimo_Centro")))) || c.isLast()){
+                    mPoly = new PolygonOptions()
+                            .strokeColor(0xE6CCFFFF)
+                            .fillColor(0x7FCCFFFF);
+                    mPoly.addAll(listCoor);
+                    Log.i("Flag1->",c.getString(c.getColumnIndex("Acronimo_Centro")));
+                    listPolys.add(new Pair(mPoly,tmpAcronimo));
+                    listCoor.clear();
+                }
+            }
+        }
+        return listPolys;
     }
     public Cursor obtnerLatittudLongitudUbicacionID(String condicion){
         String[] params = new String[]{condicion};
@@ -469,6 +503,18 @@ public final class OperacionesBaseDatos {
             }
         }
         return listPolys;
+    }
+    public Cursor obtenerEdificiosSpinner(String acronimo){
+        SQLiteDatabase db = baseDatos.getReadableDatabase();
+
+        String[] selectionArgs = {acronimo};
+
+        String sql = "SELECT * FROM " + Tablas.UBICACION + " INNER JOIN " + Tablas.CENTROESTUDIO +
+                " ON Ubicacion.FK_Centro = CentroEstudio.ID_Centro " +
+                "WHERE CentroEstudio.Acronimo_Centro =? " + "ORDER BY " + InibdPicudg.Ubicacion.NOMBRE + " ASC";
+
+        return db.rawQuery(sql,selectionArgs);
+
     }
 
     /** OPERACIONES CON LA TABLA REPORTE**/
@@ -689,7 +735,7 @@ public final class OperacionesBaseDatos {
 
         return builder.query(db,proyUsuarioReporteMarket,whereClause,selectionArgs,null,null,null);
     }
-    //OBTIENE TODOS LOS MARKETS REGISTRADOS EN LA BASE DE DATOS
+    //OBTIENE TODOS LOS MARKERS REGISTRADOS EN LA BASE DE DATOS
     public Cursor obtenerMarketLatitudLongitudAll(){
         SQLiteDatabase db = baseDatos.getReadableDatabase();
 
@@ -699,7 +745,7 @@ public final class OperacionesBaseDatos {
         return builder.query(db,proyMarketLatitudLongitud,null,null,null,null,null);
 
     }
-
+    //RETORNA PERMISOS DE ESCRITURA PARA LA BD
     public SQLiteDatabase getDb() {
         return baseDatos.getWritableDatabase();
     }

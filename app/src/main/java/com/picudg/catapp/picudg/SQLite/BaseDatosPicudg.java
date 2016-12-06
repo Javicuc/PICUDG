@@ -134,12 +134,6 @@ public class BaseDatosPicudg extends SQLiteOpenHelper{
                 Tablas.USUARIO,BaseColumns._ID,
                 Usuario.ID_USUARIO, Usuario.NOMBRE, Usuario.CORREO, Usuario.CODIGO,
                 Usuario.FK_CENTRO, Referencias.ID_CENTROESTUDIO));
-        /*
-        db.execSQL("CREATE TABLE " + Tablas.CONTACTOS_UBICACION + " (" + BaseColumns._ID + " INTEGER PRIMARY KEY , " +
-                Contactos_Ubicacion.ID_CONTACTOSUBICACION + " TEXT UNIQUE NOT NULL, " +
-                "FOREIGN KEY (" + Contactos_Ubicacion.FK_CONTACTO + ") REFERENCES " + Tablas.CONTACTO + " (" + Contacto.ID_CONTACTO + ") " +
-                "FOREIGN KEY (" + Contactos_Ubicacion.FK_UBICACION + ") REFERENCES " + Tablas.UBICACION + " (" + Ubicacion.ID_UBICACION + "));");
-        */
 
         db.execSQL(String.format("CREATE TABLE %s(%s INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "%s TEXT UNIQUE NOT NULL,%s TEXT NOT NULL %s ON DELETE CASCADE,%s TEXT NOT NULL %s ON DELETE CASCADE)",

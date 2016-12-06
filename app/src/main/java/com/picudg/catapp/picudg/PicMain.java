@@ -72,6 +72,7 @@ import com.picudg.catapp.picudg.Modelo.Usuario;
 import com.picudg.catapp.picudg.SQLite.InibdPicudg;
 import com.picudg.catapp.picudg.SQLite.LoadBD;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
+import com.picudg.catapp.picudg.Tools.OperacionesMaps;
 import com.picudg.catapp.picudg.Tools.PointInPoly;
 
 import java.text.BreakIterator;
@@ -92,25 +93,22 @@ public class PicMain extends AppCompatActivity
     @BindView(R.id.content_pic_main)
     RelativeLayout RL_Main;
     @BindView(R.id.bt_Informe)
-    ImageButton bt_Info;
+    Button bt_Info;
     @BindView(R.id.bt_CrearReporte)
-    ImageButton bt_Reportes;
+    Button bt_Reportes;
     @BindView(R.id.bt_ListaReportes)
-    ImageButton bt_listReportes;
+    Button bt_listReportes;
 
     private final int MY_PERMISISONS = 100;
-    private final int LOCATION_CODE = 400;
     private GoogleMap mMap;
     private LatLng mLatLongActual;
-    private CameraUpdate cuceiPos;
-    private Polygon poligonoCucei;
     private GoogleApiClient mGoogleApiClient;
     private OperacionesBaseDatos datos;
     private FirebaseUser user;
     private TextView nav_userName;
     private TextView nav_userEmail;
     private ImageView nav_userPhoto;
-    private List<Pair> listPolys;
+    private String acronimoCentro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,11 +141,7 @@ public class PicMain extends AppCompatActivity
 
         querysBD();
 
-        if(myRequestPermission()){
-            bt_Reportes.setEnabled(true);
-        }else{
-            showExplanation();
-        }
+        myRequestPermission();
 
         bt_Info.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,13 +172,15 @@ public class PicMain extends AppCompatActivity
         startActivity(actListaReportes);
     }
     private void startActReporte() {
-        if(comprobarUsuario()) {
-            Intent actReporte = new Intent(PicMain.this, FormEmail.class);
-            actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-            startActivity(actReporte);
-        }else{
-            llenarUsuario();
+        if (myRequestPermission()) {
+            if (comprobarUsuario()) {
+                Intent actReporte = new Intent(PicMain.this, FormEmail.class);
+                actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                startActivity(actReporte);
+            } else {
+                llenarUsuario();
+            }
         }
     }
     public void querysBD(){
@@ -279,7 +275,7 @@ public class PicMain extends AppCompatActivity
                     /** Esta funcion deber ser un Spinner dentro del dialog, cuando seleccione un acronimo, bucara
                      * el id del centro, si se encuentra dentro de las coordenadas del centro seleccionado retornara TRUE, de
                      * momento asumiremos que todos los nuevos usuarios pertenecen a CUCEI**/
-                    Cursor idCentro = datos.obtenerIdCentroEstudio("CUCEI");
+                    Cursor idCentro = datos.obtenerIdCentroEstudio(acronimoCentro);
                     idCentro.moveToFirst();
                     if (idCentro != null) {
                         try {
@@ -319,14 +315,17 @@ public class PicMain extends AppCompatActivity
         final AlertDialog.Builder builder = new AlertDialog.Builder(PicMain.this);
         LayoutInflater inflater = PicMain.this.getLayoutInflater();
         View v = inflater.inflate(R.layout.dialog_tutorial, null);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        Button bt = (Button) v.findViewById(R.id.BT_tuto);
+        builder.setView(v);
+
+        final AlertDialog dialog = builder.create();
+
+        bt.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View v) {
                 dialog.dismiss();
             }
         });
-        builder.setView(v);
-        final AlertDialog dialog = builder.create();
 
         dialog.show();
         return builder.create();
@@ -387,77 +386,50 @@ public class PicMain extends AppCompatActivity
     @SuppressWarnings("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
         LatLng mLatLngCucei = new LatLng(20.653910, -103.325807);
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-        mMap.getUiSettings().setCompassEnabled(true);
-        mMap.getUiSettings().setMapToolbarEnabled(true);
-        mMap.setMyLocationEnabled(myRequestGPSPermission());
-        /*if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+        LatLng mLatLngCucea = new LatLng(20.741980, -103.380219);
+
+        OperacionesMaps config = new OperacionesMaps(mMap,getApplicationContext());
+        mMap = config.configurarMapa();
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
             mMap.setMyLocationEnabled(true);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
                 mMap.setMyLocationEnabled(true);
             }
-        }*/
-
-        // Agregando un market al mapa
-        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_school_black_36dp)));
-        cuceiPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
-        mMap.animateCamera(cuceiPos);
-
-        datos = OperacionesBaseDatos
-                .obtenerInstancia(getApplicationContext());
-
-
-        ArrayList<LatLng> LatLong = new ArrayList<LatLng>();
-        Cursor cursor = datos.obtenerLatidLongitudCentro("CUCEI");
-        //DatabaseUtils.dumpCursor(cursor);
-        cursor.moveToFirst();
-        while(!cursor.isAfterLast()) {
-            LatLong.add(new LatLng(cursor.getDouble(cursor.getColumnIndex("Latitud")),cursor.getDouble(cursor.getColumnIndex("Longitud"))));
-            cursor.moveToNext();
         }
-        cursor.close();
-
-        final PolygonOptions PolyCucei = new PolygonOptions()
-                .strokeColor(0xE6CCFFFF)
-                .fillColor(0x7FCCFFFF);
-        PolyCucei.addAll(LatLong);
-        poligonoCucei = mMap.addPolygon(PolyCucei);
         myUbication();
-
-        Cursor AllMarkers = datos.obtenerMarketLatitudLongitudAll();
-        AllMarkers.moveToFirst();
-        DatabaseUtils.dumpCursor(AllMarkers);
-        while(!AllMarkers.isAfterLast()) {
-            mMap.addMarker(new MarkerOptions().position(new LatLng(AllMarkers.getDouble(AllMarkers.getColumnIndex("Latitud")),
-                    AllMarkers.getDouble(AllMarkers.getColumnIndex("Longitud")))).title(AllMarkers.getString(AllMarkers.getColumnIndex("Titulo")))
-                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
-            AllMarkers.moveToNext();
-        }
-        AllMarkers.close();
-
-        listPolys = datos.obtenerEdificiosCentro("CUCEI");
-        for(int i = 0; i < listPolys.size(); i++)
-            mMap.addPolygon((PolygonOptions) listPolys.get(i).first);
-
-        datos.getDb().close();
-
         PointInPoly inPoly = new PointInPoly();
-        if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
+        List<Pair> listpolyscentros = config.getListPolysCentros();
+        List<Polygon> listCentros = config.getListPoligonosCentros();
+        for(int i = 0; i < listCentros.size(); i++) {
+            if (inPoly.pointInPolygon(mLatLongActual, listCentros.get(i))) {
+                acronimoCentro = (String) listpolyscentros.get(i).second;
+                break;
+            }
+        }
+        if(acronimoCentro != null) {
+            if(acronimoCentro.equals("CUCEI")){
+                CameraUpdate camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
+                mMap.animateCamera(camaraPos);
+            }else if (acronimoCentro.equals("CUCEA")){
+                CameraUpdate camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucea, 16);
+                mMap.animateCamera(camaraPos);
+            }
             Snackbar snackbar = Snackbar
-                    .make(RL_Main, "¡Bienvenido!", Snackbar.LENGTH_LONG);
+                    .make(RL_Main, acronimoCentro + ": ¡Bienvenido!", Snackbar.LENGTH_LONG);
             snackbar.show();
-        } else {
+        }else {
+            CameraUpdate camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLongActual, 16);
+            mMap.animateCamera(camaraPos);
             Snackbar snackbar = Snackbar
                     .make(RL_Main, "¡No estas dentro de un centro de estudio!", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
     }
-
     private void updatePosition(Location location) {
         if (location != null) {
             mLatLongActual = new LatLng(location.getLatitude(), location.getLongitude());
@@ -490,33 +462,6 @@ public class PicMain extends AppCompatActivity
         Location loc = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         updatePosition(loc);
         locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 15000, 10, locListener);
-    }
-    private boolean myRequestGPSPermission(){
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
-            mMap.setMyLocationEnabled(true);
-            return true;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
-                mMap.setMyLocationEnabled(true);
-                return true;
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if((shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION))){
-                Snackbar.make(RL_Main, "Necesitamos saber tu locaclizacion para generar reportes :(", Snackbar.LENGTH_INDEFINITE)
-                        .setAction(android.R.string.ok, new View.OnClickListener() {
-                            @TargetApi(Build.VERSION_CODES.M)
-                            @Override
-                            public void onClick(View v) {
-                                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
-                            }
-                        }).show();
-            }else{
-                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
-            }
-        }
-        return false;
     }
     private boolean myRequestPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -552,49 +497,25 @@ public class PicMain extends AppCompatActivity
                     grantResults[1] == PackageManager.PERMISSION_GRANTED &&
                     grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Permisos Aceptados", Toast.LENGTH_SHORT).show();
-                bt_Reportes.setEnabled(true);
                 if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                         && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
             }
         } else {
-            showExplanation();
+            Toast.makeText(this, "Permisos Denegados", Toast.LENGTH_SHORT).show();
         }
-    }
-    private void showExplanation() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Permisos Denegados");
-        builder.setMessage("Para usar esta aplicación, necesitas aceptar los permisos solicitados");
-        builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                Uri uri = Uri.fromParts("package",getPackageName(),null);
-                intent.setData(uri);
-                startActivity(intent);
-            }
-        });
-        builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                finish();
-            }
-        });
-        builder.show();
     }
     private void alertExitMsg(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setIcon(R.drawable.ic_info_outline_white_24dp);
+        builder.setIcon(R.mipmap.ic_cancel);
         builder.setTitle("¿Estas Seguro?");
         builder.setMessage("Presiona SI para salir de la aplicación")
                 .setCancelable(false)
                 .setPositiveButton("Si", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        finish();
+                        PicMain.this.finish();
                         System.exit(0);
                     }
                 })
@@ -617,33 +538,4 @@ public class PicMain extends AppCompatActivity
         mGoogleApiClient.connect();
         super.onStart();
     }
-
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.pic_main, menu);
-        return true;
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        if(id == R.id.Delete_PicMain){
-            Toast.makeText(this, "Seleccionaste Delete", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if(id == R.id.ayuda_PicMain){
-            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if(id == R.id.configurar_PicMain){
-            Toast.makeText(this, "Seleccionaste Ayuda", Toast.LENGTH_SHORT).show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-    */
-
 }

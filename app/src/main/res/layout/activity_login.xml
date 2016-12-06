@@ -68,7 +68,7 @@
                 android:textColor="@color/colortext"
                 android:padding="16dp"
                 android:inputType="textEmailAddress"
-                android:drawableStart="@drawable/mailb"
+                android:drawableStart="@mipmap/ic_account_outline_grey600_24dp"
                 android:drawablePadding="12dp" />
 
         </android.support.design.widget.TextInputLayout>
@@ -83,7 +83,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="46dp"
                 android:layout_marginRight="46dp"
-                android:drawableStart="@drawable/lock"
+                android:drawableStart="@mipmap/ic_lock_outline_grey600_24dp"
                 android:drawablePadding="12dp"
                 android:hint="Contraseña"
                 android:inputType="textPassword"

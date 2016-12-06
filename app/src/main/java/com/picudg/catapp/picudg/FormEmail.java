@@ -1,7 +1,6 @@
 package com.picudg.catapp.picudg;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,28 +16,23 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaScannerConnection;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.PersistableBundle;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.util.Pair;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.transition.Explode;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,9 +43,12 @@ import android.view.animation.Animation;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import com.bumptech.glide.Glide;
@@ -66,6 +63,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.android.gms.nearby.messages.IBeaconId;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.jaouan.revealator.Revealator;
@@ -73,8 +71,11 @@ import com.jaouan.revealator.animations.AnimationListenerAdapter;
 import com.picudg.catapp.picudg.Modelo.Coordenadas;
 import com.picudg.catapp.picudg.Modelo.Market;
 import com.picudg.catapp.picudg.Modelo.Reporte;
+import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg;
+import com.picudg.catapp.picudg.SQLite.InibdPicudg;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 import com.picudg.catapp.picudg.Tools.IfConect;
+import com.picudg.catapp.picudg.Tools.OperacionesMaps;
 import com.picudg.catapp.picudg.Tools.PointInPoly;
 import com.picudg.catapp.picudg.Tools.Report;
 import com.picudg.catapp.picudg.Tools.SendMail;
@@ -82,7 +83,6 @@ import com.picudg.catapp.picudg.Tools.SendMail;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -90,56 +90,59 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
-import static android.Manifest.permission.CAMERA;
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
     /*** Inyecciones, utilizando ButterKnife ***/
-    @BindView(R.id.fab) View mFab;
-    @BindView(R.id.plane) View mPlaneImageView;
-    @BindView(R.id.plane_layout) View mPlaneLayout;
-    @BindView(R.id.inputs_layout) View mInputsLayout;
-    @BindView(R.id.sky_layout) View mSkyLayout;
-    @BindView(R.id.sent_layout) View mSentLayout;
-    @BindView(R.id.check) View mCheckImageView;
-    @BindView(R.id.IV_Form_img) ImageView IV_photo;
-    @BindView(R.id.coorlayout) CoordinatorLayout RL_FormEmail;
-    @BindView(R.id.BT_cam) ImageButton BT_photo;
-    @BindView(R.id.BT_Limpiar) Button bt_Limpiar;
-    @BindView(R.id.TB_MakePDF) ToggleButton tb_MakePDF;
-
+    @BindView(R.id.fab)           View         mFab;
+    @BindView(R.id.plane)         View         mPlaneImageView;
+    @BindView(R.id.sky_layout)    View         mSkyLayout;
+    @BindView(R.id.check)         View         mCheckImageView;
+    @BindView(R.id.sent_layout)   View         mSentLayout;
+    @BindView(R.id.plane_layout)  View         mPlaneLayout;
+    @BindView(R.id.inputs_layout) View         mInputsLayout;
+    @BindView(R.id.TB_MakePDF)    ToggleButton tb_MakePDF;
+    @BindView(R.id.BT_cam)        Button       BT_photo;
+    @BindView(R.id.BT_Limpiar)    Button       bt_Limpiar;
+    @BindView(R.id.IV_Form_img)   ImageView    IV_photo;
+    @BindView(R.id.coorlayout)    CoordinatorLayout RL_FormEmail;
 
     private static String APP_DIRECTORY = "picudg/";
     private static String MEDIA_DIRECTORY_FILES = APP_DIRECTORY + "files";
     private static String MEDIA_DIRECTORY = APP_DIRECTORY + "Images";
+    private final int     PHOTO_CODE = 200;
+    private final int     SELECT_PICTURE = 300;
 
     private String pdfname;
     private String asunto;
     private String descripcion;
-
-    private final int MY_PERMISISONS = 100;
-    private final int PHOTO_CODE = 200;
-    private final int SELECT_PICTURE = 300;
-    private final int LOCATION_CODE = 400;
+    private String correoContacto;
+    private String encargadoContacto;
+    private String rolContacto;
+    private String nombreCentro;
+    private String direccionCentro;
+    private String acronimoCentro;
 
     private String mPathPdf;
     private String mPath;
-    private Uri pathuri;
-    private boolean takepic;
-    private boolean reporteListo;
-    private String EdificioActual;
-    private GoogleMap mMap;
-    private LatLng mLatLongActual;
-    private LatLng mLatLongReporteActual;
-    private Marker marcador;
-    private CameraUpdate cuceiPos;
-    private Polygon poligonoCucei,PoligonoEdificio;
-    private List<Polygon> listPoligonos;
-    private FirebaseUser user;
-    private List<android.util.Pair> listPolys;
-    private PointInPoly inPoly;
+    private Uri    pathuri;
+
+    private boolean       takepic;
+    private boolean       reporteListo;
+    private String        EdificioActual;
+    private GoogleMap     mMap;
+    private LatLng        mLatLongActual;
+    private LatLng        mLatLongReporteActual;
+    private Marker        marcador;
+    private PolygonOptions poligonoCentro;
+    private CameraUpdate  camaraPos;
+    private FirebaseUser  user;
+    private PointInPoly   inPoly;
     private OperacionesBaseDatos datos;
+    private List<android.util.Pair> listPolys;
+    private List<Polygon> listCentros;
+    List<Pair> listpolyscentros;
+    OperacionesMaps config;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,7 +151,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Crear Reporte");
-        //setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
         ButterKnife.bind(this);
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -165,12 +168,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 .findFragmentById(R.id.mapForm);
         mapFragment.getMapAsync(this);
 
-        if (myRequestPermission()) {
-            BT_photo.setEnabled(true);
-        } else {
-            BT_photo.setEnabled(false);
-        }
-
         /** Opciones de captura de imagen: Galeria ó Camara **/
         BT_photo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,6 +180,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             @Override
             public void onClick(View view) {
                 if (IV_photo.getDrawable() != null && reporteListo == false) {
+                    obtenerEdificioActual();
+                    obtenerInfoCentro();
                     llenarReporte();
                 } else {
                     Snackbar snackbar = Snackbar
@@ -196,15 +195,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         bt_Limpiar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                datos = OperacionesBaseDatos
-                        .obtenerInstancia(getApplicationContext());
                 LimpiarPantalla();
-                if (marcador != null) {
-                    datos.eliminarMarketNombre(marcador.getTitle());
-                    marcador.remove();
-                }
-                mMap.animateCamera(cuceiPos);
-                datos.getDb().close();
+                mMap.animateCamera(camaraPos);
             }
         });
 
@@ -238,7 +230,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     }
     public void alertConect(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setIcon(R.drawable.);
+        builder.setIcon(R.mipmap.ic_wireless_error);
         builder.setTitle("ATENCIÓN");
         builder.setMessage("¡Verifica tu conexion a internet!");
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -258,20 +250,50 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
         View v = inflater.inflate(R.layout.fullscreen_dialog, null);
         builder.setView(v);
+        if(getEdificioActual() == null) {
 
+            final TextView tv_depend = (TextView) v.findViewById(R.id.TV_dependencia);
+            final Spinner spinner = (Spinner) v.findViewById(R.id.SPN_ubicacionesForm);
+            spinner.setVisibility(View.VISIBLE);
+            tv_depend.setVisibility(View.VISIBLE);
+
+            //Creando Adaptador para Spinner
+            DatabaseUtils.dumpCursor(datos.obtenerEdificiosSpinner(acronimoCentro));
+            SimpleCursorAdapter spinnerEdificios = new SimpleCursorAdapter(this,
+                    android.R.layout.simple_spinner_item,
+                    datos.obtenerEdificiosSpinner(acronimoCentro),
+                    new String[]{InibdPicudg.Ubicacion.NOMBRE},
+                    new int[]{android.R.id.text1},
+                    SimpleCursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+
+            spinner.setAdapter(spinnerEdificios);
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    Cursor c1 = (Cursor) parent.getItemAtPosition(position);
+                    EdificioActual = c1.getString(c1.getColumnIndex(InibdPicudg.Ubicacion.NOMBRE));
+                    obtenerContactoEdificio(EdificioActual);
+                    //Toast.makeText(FormEmail.this, EdificioActual, Toast.LENGTH_SHORT).show();
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            });
+        }
         Button okReporte = (Button) v.findViewById(R.id.BT_reporteDialog);
         final TextInputLayout tilAsunto = (TextInputLayout) v.findViewById(R.id.TIL_asunto);
         final TextInputLayout tilDescripcion = (TextInputLayout) v.findViewById(R.id.TIL_descripcion);
+
         final AlertDialog dialog = builder.create();
 
         okReporte.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                asunto = tilAsunto.getEditText().getText().toString().trim();
+                asunto      = tilAsunto.getEditText().getText().toString().trim();
                 descripcion = tilDescripcion.getEditText().getText().toString().trim();
 
-                if (validaCampos(asunto) && validaCampos(descripcion)) {
+                if (validaCampos(getDescripcion()) && validaCampos(getAsunto())) {
 
                     WritePDF();
 
@@ -279,7 +301,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                     SimpleDateFormat ft =
                             new SimpleDateFormat ("yyyy/MM/dd, hh:mm:ss");
                     addMarketReport(mLatLongReporteActual);
-                    String idMarkerTMP = datos.insertarMarket(new Market(null,null,"Reporte",asunto));
+                    String idMarkerTMP = datos.insertarMarket(new Market(null,null,"Reporte",getAsunto()));
 
                     Cursor idUsuarioTMP = datos.obtenerUsuarioCorreo(user.getEmail());
                     idUsuarioTMP.moveToFirst();
@@ -288,7 +310,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                         try {
                             datos.getDb().beginTransaction();
 
-                            datos.insertarReportes(new Reporte(null, asunto, descripcion, mPathPdf,
+                            datos.insertarReportes(new Reporte(null, getAsunto(), getDescripcion(), mPathPdf,
                                     idUsuarioTMP.getString(idUsuarioTMP.getColumnIndex("ID_Usuario")), idMarkerTMP,
                                     String.valueOf(takepic ? mPath : pathuri), ft.format(date).toString(), EdificioActual));
 
@@ -323,68 +345,63 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         tb_MakePDF.setChecked(false);
         return builder.create();
     }
-    @SuppressWarnings("MissingPermission")
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-        mMap.setMyLocationEnabled(myRequestGPSPermission());
-
-        // Agregando un market al mapa
         LatLng mLatLngCucei = new LatLng(20.653910, -103.325807);
-        mMap.addMarker(new MarkerOptions().position(mLatLngCucei).title("Centro Universitario de Ciencias Exactas e Ingenierias")
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_school_black_36dp)));
-        cuceiPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
-        mMap.animateCamera(cuceiPos);
+        LatLng mLatLngCucea = new LatLng(20.741980, -103.380219);
 
-        datos = OperacionesBaseDatos
-                .obtenerInstancia(getApplicationContext());
+        config = new OperacionesMaps(mMap,getApplicationContext());
 
-        ArrayList<LatLng> LatLong = new ArrayList<LatLng>();
-        Cursor cursor = datos.obtenerLatidLongitudCentro("CUCEI");
-        //DatabaseUtils.dumpCursor(cursor);
-        cursor.moveToFirst();
-        while(!cursor.isAfterLast()) {
-            LatLong.add(new LatLng(cursor.getDouble(cursor.getColumnIndex("Latitud")),cursor.getDouble(cursor.getColumnIndex("Longitud"))));
-            cursor.moveToNext();
+        mMap          = config.configurarMapa();
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
+            mMap.setMyLocationEnabled(true);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
+                mMap.setMyLocationEnabled(true);
+            }
         }
-        cursor.close();
-
-        final PolygonOptions PolyCucei = new PolygonOptions()
-                .strokeColor(0xE6CCFFFF)
-                .fillColor(0x7FCCFFFF);
-        PolyCucei.addAll(LatLong);
-        poligonoCucei = mMap.addPolygon(PolyCucei);
-
-        Cursor AllMarkers = datos.obtenerMarketLatitudLongitudAll();
-        AllMarkers.moveToFirst();
-        DatabaseUtils.dumpCursor(AllMarkers);
-        while(!AllMarkers.isAfterLast()) {
-            mMap.addMarker(new MarkerOptions().position(new LatLng(AllMarkers.getDouble(AllMarkers.getColumnIndex("Latitud")),
-                    AllMarkers.getDouble(AllMarkers.getColumnIndex("Longitud")))).title(AllMarkers.getString(AllMarkers.getColumnIndex("Titulo")))
-                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
-            AllMarkers.moveToNext();
-        }
-        AllMarkers.close();
-        listPoligonos = new ArrayList<>();
-        listPolys = datos.obtenerEdificiosCentro("CUCEI");
-        for(int i = 0; i < listPolys.size(); i++) {
-            PoligonoEdificio = mMap.addPolygon((PolygonOptions) listPolys.get(i).first);
-            Log.i("Edificio: ", (String) listPolys.get(i).second);
-            listPoligonos.add(PoligonoEdificio);
-        }
-        datos.getDb().close();
-
         inPoly = new PointInPoly();
-        myUbication();
-        if (inPoly.pointInPolygon(mLatLongActual, poligonoCucei)) {
+        listpolyscentros = config.getListPolysCentros();
+        listCentros = config.getListPoligonosCentros();
+        if(comprobarUbicacion()) {
+            if (acronimoCentro != null) {
+                if (acronimoCentro.equals("CUCEI")) {
+                    camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucei, 16);
+                    mMap.animateCamera(camaraPos);
+                } else if (acronimoCentro.equals("CUCEA")) {
+                    camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLngCucea, 16);
+                    mMap.animateCamera(camaraPos);
+                }
+                Snackbar snackbar = Snackbar
+                        .make(RL_FormEmail, acronimoCentro + ": ¡Bienvenido!", Snackbar.LENGTH_LONG);
+                snackbar.show();
+            }
+        }else {
+            camaraPos = CameraUpdateFactory.newLatLngZoom(mLatLongActual, 16);
+            mMap.animateCamera(camaraPos);
             Snackbar snackbar = Snackbar
-                    .make(RL_FormEmail, "!Bienvenido!", Snackbar.LENGTH_LONG);
-            snackbar.show();
-        } else {
-            Snackbar snackbar = Snackbar
-                    .make(RL_FormEmail, "!No estas dentro de un centro de estudio!", Snackbar.LENGTH_LONG);
+                    .make(RL_FormEmail, "¡No estas dentro de un centro de estudio!", Snackbar.LENGTH_LONG);
             snackbar.show();
         }
+    }
+    public boolean comprobarUbicacion(){
+        myUbication();
+        for(int i = 0; i < listCentros.size(); i++) {
+            //OBTENEMOS TRUE, SI ES ESTA EN UN CENTRO DE ESTUDIO
+            if (inPoly.pointInPolygon(mLatLongActual, listCentros.get(i))) {
+                acronimoCentro = (String) listpolyscentros.get(i).second; //OBTENEMOS EL ACRONIMO DEL CENTRO DE ESTUDIO
+                Log.i("Acronimo?",acronimoCentro);
+                poligonoCentro = (PolygonOptions) listpolyscentros.get(i).first; //OBTENEMOS EL POLIGONO DEL CENTRO DE ESTUDIO
+                Log.i("Centro?",poligonoCentro.toString());
+                listPolys     = config.getListNombrePolyEdificiosCentro(acronimoCentro); //OBTENEMOS LA LISTA DE NOMBRES Y POLIGONOS DEL CENTRO DE ESTUDIO
+                BT_photo.setClickable(true);
+                return true;
+            }
+        }
+        //SI EL USUARIO NO ESTA EN EL CENTRO DE ESTUDIO, BLOQUEAMOS EL BOTON DE CAPTURA DE IMAGEN
+        BT_photo.setClickable(false);
+        return false;
     }
     public void startMain(){
         final Handler handler = new Handler();
@@ -401,7 +418,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             }
         }, 4500);
     }
-    /*** Adjuntamos el metodo enviar email.*/
     @OnClick(R.id.fab)
     void send() {
         // - Prepare views visibility.
@@ -422,6 +438,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             public void onAnimationEnd(Animator animation) {
                 // - Update views visibility.
                 mInputsLayout.setVisibility(View.INVISIBLE);
+                mFab.setVisibility(View.INVISIBLE);
                 // - Fly away.
                 flyAway();
             }
@@ -429,13 +446,13 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         circularReveal.start();
     }
     private void enviarmail() {
-        /** Obtenemos el contenido del correo **/
         //Creamos el objecto SendMail
-        SendMail sm = new SendMail(this, "javier.jalr7@gmail.com", asunto, pdfname);
+        Log.i("PDFName-> ", getPdfname());
+        Log.i("CorreoContacto-> ", getCorreoContacto());
+        SendMail sm = new SendMail(this, getCorreoContacto(), asunto, getPdfname());
         //llamamos a ejecutar el proceso que envia el correo
         sm.execute();
     }
-    /*** Comienza la animacion de volar.*/
     private void flyAway() {
         // - Combine rotation and translation animations.
         final RotateAnimation rotateAnimation = new RotateAnimation(0, 180);
@@ -489,21 +506,30 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 tb_MakePDF.setClickable(true);
                 tb_MakePDF.setChecked(false);
                 tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
-                if(takepic) {
-                    File file = new File(mPath);
-                    file.delete();
-                    takepic = false;
-                    getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mPath))));
-                }else if(reporteListo){
-                    File file = new File(mPathPdf);
-                    file.delete();
-                    reporteListo = false;
-                }
-                mLatLongReporteActual=null;
+                eliminarReporte();
             }
         }, 1000);
     }
-    /**Inicializamos nuestros componentes.*/
+    private void eliminarReporte(){
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+        if (marcador != null) {
+            datos.eliminarMarketNombre(marcador.getTitle());
+            marcador.remove();
+        }
+        else if(takepic) {
+            File file = new File(mPath);
+            file.delete();
+            takepic = false;
+            getApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mPath))));
+        }else if(reporteListo){
+            File file = new File(mPathPdf);
+            file.delete();
+            reporteListo = false;
+        }
+        datos.getDb().close();
+        mLatLongReporteActual = null;
+    }
     private void retoreInputsLayout() {
         mInputsLayout.postDelayed(new Runnable() {
             @Override
@@ -514,12 +540,14 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 circularReveal.setDuration(250);
                 circularReveal.start();
                 mInputsLayout.setVisibility(View.VISIBLE);
+                mFab.setVisibility(View.VISIBLE);
                 IV_photo.setImageResource(0);
                 IV_photo.setVisibility(View.GONE);
                 tb_MakePDF.setClickable(true);
                 tb_MakePDF.setChecked(false);
                 tb_MakePDF.setBackgroundColor(getResources().getColor(R.color.primary_light));
                 reporteListo = false;
+                EdificioActual = null;
             }
         }, 1000);
     }
@@ -541,7 +569,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
 
             Long TimeStamp = System.currentTimeMillis() / 1000;
             pdfname = TimeStamp.toString() + ".pdf";
-            mPathPdf = Environment.getExternalStorageDirectory() + File.separator + MEDIA_DIRECTORY_FILES + File.separator + pdfname;
+            mPathPdf = Environment.getExternalStorageDirectory() + File.separator + MEDIA_DIRECTORY_FILES + File.separator + getPdfname();
             Log.i("Path->", "WritePDF: " + mPathPdf.toString().trim());
 
             BitmapDrawable drawable = (BitmapDrawable) IV_photo.getDrawable();
@@ -551,7 +579,8 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             byte[] imageInByte = stream.toByteArray();
 
             //Creamos el objecto Report
-            Report makePDF = new Report(mPathPdf, asunto, descripcion, imageInByte, this);
+            Report makePDF = new Report(mPathPdf, getAsunto(), getDescripcion(), imageInByte,getEdificioActual(),getNombreCentro(),getDireccionCentro(),
+                    getEncargadoContacto(),getRolContacto(),this);
             makePDF.execute();
         }
     }
@@ -571,7 +600,7 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     }
     private void alertMsg(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setIcon(R.drawable.ic_picture_as_pdf_black_24dp);
+        builder.setIcon(R.mipmap.ic_cancel);
         builder.setTitle("¿Estas Seguro?");
         builder.setMessage("El reporte no sera enviado");
         builder.setPositiveButton("Si", new DialogInterface.OnClickListener() {
@@ -582,6 +611,9 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                 if (marcador != null) {
                     datos.eliminarMarketNombre(marcador.getTitle());
                     marcador.remove();
+                }
+                if(reporteListo){
+
                 }
                 datos.getDb().close();
                 Intent actMain = new Intent(FormEmail.this, PicMain.class);
@@ -602,23 +634,29 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_form, menu);
         return true;
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.makePDF_MenuMain:
+            case R.id.viewPDF_FormEmail:
                 if(reporteListo)
                     ReadPDF(mPathPdf,getApplicationContext());
                 else
                     Toast.makeText(this, "Crea el reporte", Toast.LENGTH_SHORT).show();
                 return true;
-            case R.id.ayuda_MenuMain:
+            case R.id.ayuda_FormEmail:
                 Toast.makeText(this, "Ayuda", Toast.LENGTH_SHORT).show();
                 return true;
-            case R.id.delete_MenuMain:
-                Toast.makeText(this, "Borrar", Toast.LENGTH_SHORT).show();
+            case R.id.syncUserMap:
+                myUbication();
+                if(comprobarUbicacion()) {
+                    Snackbar snackbar = Snackbar
+                            .make(RL_FormEmail, acronimoCentro + ": ¡Bienvenido!", Snackbar.LENGTH_LONG);
+                    snackbar.show();
+                }else
+                    Toast.makeText(this, "¡Accede a tu centro de estudios!", Toast.LENGTH_SHORT).show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -631,24 +669,23 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
     }
     private void addMarketReport(LatLng coordenadas) {
         CameraUpdate miUbicacion = CameraUpdateFactory.newLatLngZoom(coordenadas, 16);
-        //if(marcador != null) marcador.remove();
-        PointInPoly inPoly = new PointInPoly();
-        if (inPoly.pointInPolygon(coordenadas, poligonoCucei)||!inPoly.pointInPolygon(coordenadas, poligonoCucei)) {
+        inPoly = new PointInPoly();
+        if (mLatLongReporteActual != null) {
             marcador = mMap.addMarker(new MarkerOptions()
                     .position(coordenadas)
                     .title(asunto)
-                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_report_problem_black_18dp)));
+                    .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_danger)));
             mMap.animateCamera(miUbicacion);
         } else {
             Snackbar snackbar = Snackbar
-                    .make(RL_FormEmail, "¡Market incorrecto!", Snackbar.LENGTH_LONG);
+                    .make(RL_FormEmail, "¡Fallo al obtener localizacón!", Snackbar.LENGTH_SHORT);
             snackbar.show();
         }
     }
     private void updatePosition(Location location) {
         if (location != null) {
             mLatLongActual = new LatLng(location.getLatitude(), location.getLongitude());
-            //addMarketReport(mLatLongActual);
+            //addMarketReport(mLatLongActual); //CADA QUE SE REFRESCA LA UBICACION COLOCAMOS UN MARKER
         }
     }
     LocationListener locListener = new LocationListener() {
@@ -682,38 +719,11 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         updatePosition(loc);
         locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 15000, 10, locListener);
     }
-    private boolean myRequestGPSPermission(){
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
-            mMap.setMyLocationEnabled(true);
-            return true;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if((checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)){
-                mMap.setMyLocationEnabled(true);
-                return true;
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if((shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION))){
-                Snackbar.make(RL_FormEmail, "Necesitamos saber tu locaclizacion para generar reportes :(", Snackbar.LENGTH_INDEFINITE)
-                        .setAction(android.R.string.ok, new View.OnClickListener() {
-                            @TargetApi(Build.VERSION_CODES.M)
-                            @Override
-                            public void onClick(View v) {
-                                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
-                            }
-                        }).show();
-            }else{
-                requestPermissions(new String[]{ACCESS_FINE_LOCATION}, LOCATION_CODE);
-            }
-        }
-        return false;
-    }
     private void showOptions() {
-        final CharSequence[] option = {"Elegir Foto", "Tomar Foto", "Cancelar"};
+        final CharSequence[] option = {"Elegir Foto", "Tomar Foto"};
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Elige una opción:");
-        builder.setIcon(R.drawable.ic_add_to_photos_black_24dp);
+        builder.setIcon(R.mipmap.ic_addpicture);
         builder.setItems(option, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -746,31 +756,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(New_File));
             startActivityForResult(intent, PHOTO_CODE);
         }
-    }
-    private boolean myRequestPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-        if ((checkSelfPermission(WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) &&
-                (checkSelfPermission(CAMERA) == PackageManager.PERMISSION_GRANTED) &&
-                (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-            return true;
-        }
-        if ((shouldShowRequestPermissionRationale(WRITE_EXTERNAL_STORAGE)) ||
-                (shouldShowRequestPermissionRationale(CAMERA)) ||
-                (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION))) {
-            Snackbar.make(RL_FormEmail, "Permisos necesarios para la aplicación", Snackbar.LENGTH_INDEFINITE)
-                    .setAction(android.R.string.ok, new View.OnClickListener() {
-                        @TargetApi(Build.VERSION_CODES.M)
-                        @Override
-                        public void onClick(View v) {
-                            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION}, MY_PERMISISONS);
-                        }
-                    }).show();
-        } else {
-            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE, CAMERA, ACCESS_FINE_LOCATION}, MY_PERMISISONS);
-        }
-        return false;
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -809,36 +794,6 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
                     mLatLongReporteActual = mLatLongActual;
                     break;
             }
-            llenarReporte();
-            inPoly = new PointInPoly();
-            for(int i = 0; i < listPoligonos.size(); i++) {
-                if (inPoly.pointInPolygon(mLatLongReporteActual, listPoligonos.get(i))) {
-                    Toast.makeText(this, "Estas en el Edificio: " + listPolys.get(i).second, Toast.LENGTH_LONG).show();
-                    EdificioActual = listPolys.get(i).second.toString();
-                    Log.i("Edificio->", (String) listPolys.get(i).second);
-                    break;
-                }
-            }
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == MY_PERMISISONS) {
-            if (grantResults.length == 3 && grantResults[0] == getPackageManager().PERMISSION_GRANTED &&
-                    grantResults[1] == PackageManager.PERMISSION_GRANTED &&
-                    grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permisos Aceptados", Toast.LENGTH_SHORT).show();
-                BT_photo.setEnabled(true);
-                if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                        && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    return;
-                }
-                mMap.setMyLocationEnabled(true);
-            }
-        } else {
-            showExplanation();
         }
     }
     @Override
@@ -851,28 +806,82 @@ public class FormEmail extends AppCompatActivity implements OnMapReadyCallback {
         super.onRestoreInstanceState(savedInstanceState);
         mPath = savedInstanceState.getString("file_path");
     }
-    private void showExplanation() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Permisos Denegados");
-        builder.setMessage("Para usar esta aplicación, necesitas aceptar los permisos solicitados");
-        builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                Uri uri = Uri.fromParts("package",getPackageName(),null);
-                intent.setData(uri);
-                startActivity(intent);
+    public String getEncargadoContacto() {
+        return encargadoContacto;
+    }
+    public String getRolContacto() {
+        return rolContacto;
+    }
+    public String getEdificioActual() {
+        return EdificioActual;
+    }
+    public String getDescripcion() {
+        return descripcion;
+    }
+    public String getAsunto() {
+        return asunto;
+    }
+    public String getPdfname() {
+        return pdfname;
+    }
+    public String getCorreoContacto() {
+        return correoContacto;
+    }
+    public String getNombreCentro() {
+        return nombreCentro;
+    }
+    public String getDireccionCentro() {
+        return direccionCentro;
+    }
+    private void obtenerEdificioActual() {
+        if(listPolys != null) {
+            inPoly = new PointInPoly();
+            Log.i("SizePolys", String.valueOf(listPolys.size()));
+            Log.i("NamePolys", (String) listPolys.get(0).second);
+            Log.i("LatLongReporte", String.valueOf(mLatLongReporteActual));
+            for (int i = 0; i < listPolys.size(); i++) {
+                Log.i("FlagFor", String.valueOf(i));
+                if (inPoly.pointInPolygonOptions(mLatLongReporteActual, (PolygonOptions) listPolys.get(i).first)) {
+                    EdificioActual = listPolys.get(i).second.toString();
+                    Log.i("Edificio->", (String) listPolys.get(i).second);
+                    obtenerContactoEdificio(EdificioActual);
+                    break;
+                } else {
+                    EdificioActual = null;
+                }
             }
-        });
-        builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                finish();
-            }
-        });
-        builder.show();
+        }
+    }
+    private void obtenerInfoCentro(){
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+        Cursor c = datos.obtenerIdCentroEstudio(acronimoCentro);
+        c.moveToFirst();
+        if(c != null){
+            nombreCentro    = c.getString(c.getColumnIndex("Nombre_Centro"));
+            direccionCentro = c.getString(c.getColumnIndex("Direccion_Centro"));
+        }else{
+            nombreCentro    = "Desconocido";
+            direccionCentro = "Desconocido";
+        }
+        c.close();
+        datos.getDb().close();
+    }
+    private void obtenerContactoEdificio(String edificioActual){
+        datos = OperacionesBaseDatos
+                .obtenerInstancia(getApplicationContext());
+        Cursor c = datos.obtenerContactosUbicacionEdificio(edificioActual);
+        c.moveToFirst();
+        if(c != null){
+            encargadoContacto = c.getString(c.getColumnIndex("Nombre"));
+            correoContacto    = c.getString(c.getColumnIndex("Correo"));
+            rolContacto       = c.getString(c.getColumnIndex("Rol"));
+        }else{
+            correoContacto = "javier.jalr7+ServiciosGenerales@gmail.com";
+        }
+        c.close();
+        datos.getDb().close();
+
     }
 
 }

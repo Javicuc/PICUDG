@@ -84,7 +84,22 @@
                     android:textColorHint="@color/colorhint"
                     android:textSize="22sp" />
             </android.support.design.widget.TextInputLayout>
-
+            <TextView
+                android:id="@+id/TV_centroEstudioMain"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textSize="20sp"
+                android:padding="16dp"
+                android:textColor="@color/secondary_text"
+                android:text="Seleccione Centro"/>
+            <Spinner
+                android:id="@+id/SPN_centrosMain"
+                android:padding="16dp"
+                android:textAlignment="viewStart"
+                android:minHeight="45dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            </Spinner>
             <Button
                 android:id="@+id/BT_reporteUsuario"
                 android:layout_width="match_parent"

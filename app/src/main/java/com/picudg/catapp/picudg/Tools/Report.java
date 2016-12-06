@@ -45,22 +45,30 @@ public class Report extends AsyncTask<Void, Void, Void> {
     private Image   userImage;
     private byte[]  imageInByte;
 
-    private String  alumno;
-    private String  edificio;
-    private String  centroEstudio;
-    private String  fAsunto;
-    private String  fDescripcion;
+    private String ubicacion;
+    private String centroEstudio;
+    private String direccion;
+    private String encargado;
+    private String rolEncargado;
+    private String fAsunto;
+    private String fDescripcion;
 
     //Progressdialog para mostrar el estado del envio
     private ProgressDialog progressDialog;
 
-    public Report(String path, String asunto, String descripcion,byte[] img, Context context) {
+    public Report(String path, String asunto, String descripcion,byte[] img,String ubicacion,String centroEstudio,String direccion,
+            String encargado,String rolEncargado, Context context) {
 
-        this.context = context;
-        this.mPathPdf = path;
-        this.fAsunto = asunto;
-        this.fDescripcion = descripcion;
-        this.imageInByte = img;
+        this.context       = context;
+        this.mPathPdf      = path;
+        this.fAsunto       = asunto;
+        this.fDescripcion  = descripcion;
+        this.imageInByte   = img;
+        this.ubicacion     = ubicacion;
+        this.centroEstudio = centroEstudio;
+        this.direccion     = direccion;
+        this.encargado     = encargado;
+        this.rolEncargado  = rolEncargado;
     }
     @Override
     protected void onPreExecute() {
@@ -122,7 +130,7 @@ public class Report extends AsyncTask<Void, Void, Void> {
 
             /** Creamos parrafo y seteamos la font **/
             Paragraph p1 = new Paragraph();
-            p1.add(new Phrase("SISTEMA DE REPORTE DE INFRAESTRUCTURA UDG-CUCEI.", fontTitulos));
+            p1.add(new Phrase("SISTEMA DE REPORTE DE INFRAESTRUCTURA PICUDG.", fontTitulos));
             p1.add(new Phrase(Chunk.NEWLINE));
             p1.add(new Phrase(Chunk.NEWLINE));
             p1.setAlignment(Paragraph.ALIGN_JUSTIFIED);
@@ -130,20 +138,22 @@ public class Report extends AsyncTask<Void, Void, Void> {
 
             /** Ubicacion del problema y detalles **/
             Paragraph pdet = new Paragraph();
-            pdet.add(new Phrase("Centro Uniersitario de Ciencias Exactas e Ingenierias (CUCEI).", fontContenido));
+            pdet.add(new Phrase(centroEstudio+".", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
-            pdet.add(new Phrase("Blvd. Marcelino García Barragán 1421, Ciudad Universitaria, 44430 Guadalajara, JAL.", fontContenido));
+            pdet.add(new Phrase(direccion+".", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
-            pdet.add(new Phrase("Departamento de Ciencias Basicas, Jorge Zamudio Hernandez.", fontContenido));
+            pdet.add(new Phrase(ubicacion + ":", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
-            pdet.add(new Phrase(ft.format(date).toString() + ", DEDX-A015", fontContenido));
+            pdet.add(new Phrase(encargado + ", " + rolEncargado + ".", fontContenido));
+            pdet.add(new Phrase(Chunk.NEWLINE));
+            pdet.add(new Phrase("Fecha y Hora del Reporte: " + ft.format(date).toString() + ".", fontContenido));
             pdet.add(new Phrase(Chunk.NEWLINE));
             pdet.add(new Phrase(Chunk.NEWLINE));
             New_Document.add(pdet);
 
             /** Agregamos la descripcion del usuario **/
             Paragraph p2 = new Paragraph();
-            p2.add(new Phrase(fAsunto + ":", fontTitulos));
+            p2.add(new Phrase(fAsunto, fontTitulos));
             p2.add(new Phrase(Chunk.NEWLINE));
             p2.add(new Phrase(Chunk.NEWLINE));
             p2.add(new Phrase(fDescripcion, fontContenido));
@@ -177,10 +187,11 @@ public class Report extends AsyncTask<Void, Void, Void> {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            /** Cambiamos el tamaño de la imagen, para que se adapte al documento **/
-            //float documentWidth = New_Document.getPageSize().getWidth() - New_Document.leftMargin() - New_Document.rightMargin();
-            //float documentHeight = New_Document.getPageSize().getHeight() - New_Document.topMargin() - New_Document.bottomMargin();
-            //userImage.scaleToFit(documentWidth, documentHeight);
+            /** Cambiamos el tamaño de la imagen, para que se adapte al documento
+            float documentWidth = New_Document.getPageSize().getWidth() - New_Document.leftMargin() - New_Document.rightMargin();
+            float documentHeight = New_Document.getPageSize().getHeight() - New_Document.topMargin() - New_Document.bottomMargin();
+            userImage.scaleToFit(documentWidth, documentHeight);
+             **/
             userImage.setAlignment(Image.MIDDLE);
 
             /**Agregamos la imagen que capturo el usuario(intent) al documento **/

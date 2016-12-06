@@ -49,11 +49,10 @@
                     android:id="@+id/IV_ubicacionCard"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/TV_asuntoCard"
                     android:layout_marginLeft="24dp"
                     android:paddingRight="12dp"
                     android:layout_toLeftOf="@+id/TV_escuelaCard"
-                    android:src="@mipmap/ic_school_black_36dp" />
+                    android:src="@mipmap/ic_school_black_24dp" />
 
                 <TextView
                     android:id="@+id/TV_escuelaCard"

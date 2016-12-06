@@ -5,11 +5,11 @@
 
         <item
             android:id="@+id/nav_makeReporte"
-            android:icon="@drawable/ic_attach_file_black_18dp"
+            android:icon="@mipmap/ic_reportblanco"
             android:title="Nuevo" />
         <item
             android:id="@+id/nav_listReportes"
-            android:icon="@drawable/ic_picture_as_pdf_black_24dp"
+            android:icon="@mipmap/ic_documents"
             android:title="Reportes" />
     </group>
 
@@ -17,11 +17,11 @@
         <menu>
             <item
                 android:id="@+id/share_fb"
-                android:icon="@drawable/com_facebook_button_icon_blue"
+                android:icon="@mipmap/ic_facebook_grey600_18dp"
                 android:title="Facebook" />
             <item
                 android:id="@+id/share_google"
-                android:icon="@drawable/common_google_signin_btn_icon_dark_normal"
+                android:icon="@mipmap/ic_google_plus_grey600_18dp"
                 android:title="Google+" />
         </menu>
     </item>
@@ -29,22 +29,24 @@
         <menu>
             <item
                 android:id="@+id/Sop_send"
-                android:icon="@drawable/ic_menu_send"
+                android:icon="@drawable/ic_send_white_24dp"
                 android:title="Sugerencia" />
             <item
                 android:id="@+id/Sop_ayuda"
-                android:icon="@drawable/ic_info_outline_white_24dp"
+                android:icon="@mipmap/ic_help_circle_outline_grey600_18dp"
                 android:title="Ayuda" />
             <item
                 android:id="@+id/Sop_term"
-                android:title="Terminos"/>
+                android:title="Terminos"
+                android:icon="@mipmap/ic_information_variant_grey600_18dp"/>
             <item
                 android:id="@+id/Sop_conf"
-                android:icon="@drawable/ic_menu_manage"
+                android:icon="@mipmap/ic_settings_grey600_18dp"
                 android:title="Configurar" />
         </menu>
     </item>
     <item
         android:id="@+id/out"
-        android:title="Salir" />
+        android:title="Salir"
+        android:icon="@mipmap/ic_logout_variant_grey600_18dp"/>
 </menu>

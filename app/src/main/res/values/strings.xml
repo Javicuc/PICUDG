@@ -6,6 +6,8 @@
     <string name="reporte_top">"Necesitas rellenar los campos solicitados para procesar tu reporte en las instalaciones del centro universitario."</string>
     <string name="Terminos">Necesitas rellenar los campos solicitados, para poder utilizar la aplicación dentro de las instalaciones de cualquier centro
     de estudio dependiente de la UDG.</string>
+    <string name="Tutorial">PICUDG es una aplicación de reporte de infraestructura escolar, para uitlizar esta aplicación solo basta con seguir los
+    diguientes pasos: </string>
     <!-- Facebook Strings -->
     <string name="facebook_app_id">971794976298192</string>
 

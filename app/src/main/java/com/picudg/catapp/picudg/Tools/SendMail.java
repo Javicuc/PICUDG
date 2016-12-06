@@ -116,7 +116,7 @@ public class SendMail extends AsyncTask<Void, Void, Void> {
             //Creamos un source y lo establecemos con el archivo origen.
             DataSource source = new FileDataSource(filename);
             messageBodyPart.setDataHandler(new DataHandler(source));
-            messageBodyPart.setFileName(filename);
+            messageBodyPart.setFileName("PICUDG-" + pdfname);
             //Agregamos el archivo al multipart.
             multipart.addBodyPart(messageBodyPart);
 

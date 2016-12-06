@@ -1,11 +1,7 @@
 package com.picudg.catapp.picudg;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,13 +10,9 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
-import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.ReporteCardView;
-import com.picudg.catapp.picudg.SQLite.BaseDatosPicudg;
-import com.picudg.catapp.picudg.SQLite.InibdPicudg;
 import com.picudg.catapp.picudg.SQLite.OperacionesBaseDatos;
 import com.picudg.catapp.picudg.Tools.AdaptadorReportes;
-import com.picudg.catapp.picudg.Tools.PicudgApp;
 
 import java.util.List;
 
