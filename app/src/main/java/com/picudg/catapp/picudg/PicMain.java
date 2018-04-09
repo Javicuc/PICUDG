@@ -276,6 +276,7 @@ public class PicMain extends AppCompatActivity
                      * el id del centro, si se encuentra dentro de las coordenadas del centro seleccionado retornara TRUE, de
                      * momento asumiremos que todos los nuevos usuarios pertenecen a CUCEI**/
                     Cursor idCentro = datos.obtenerIdCentroEstudio(acronimoCentro);
+                    Toast.makeText(PicMain.this, acronimoCentro, Toast.LENGTH_SHORT).show();
                     idCentro.moveToFirst();
                     if (idCentro != null) {
                         try {

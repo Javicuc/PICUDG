@@ -118,4 +118,5 @@
         "when a user tries to pick up one of cards.\n\n"
     </string>
     <string name="title_activity_lista_reportes">lista_reportes</string>
+    <string name="title_activity_reporte_full_view">ReporteFullView</string>
 </resources>

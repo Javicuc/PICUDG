@@ -79,6 +79,9 @@
 
         <activity
             android:name=".lista_reportes"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ReporteFullView"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

@@ -1,19 +1,21 @@
 package com.picudg.catapp.picudg.Tools;
 import android.content.Context;
-import android.database.Cursor;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.vision.text.Text;
-import com.picudg.catapp.picudg.Modelo.Reporte;
 import com.picudg.catapp.picudg.Modelo.ReporteCardView;
 import com.picudg.catapp.picudg.R;
+import com.picudg.catapp.picudg.ReporteFullView;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -41,6 +43,7 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
         public ImageView ivPhoto;
         public TextView  tvAutor;
         public TextView  tvFecha;
+        public Button    btVerMas;
 
         public ViewHolder(View v){
             super(v);
@@ -52,7 +55,7 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
             ivPhoto       = (ImageView) v.findViewById(R.id.IV_photoCard);
             tvAutor       = (TextView)  v.findViewById(R.id.TV_autorCard);
             tvFecha       = (TextView)  v.findViewById(R.id.TV_fechaCard);
-
+            btVerMas      = (Button)    v.findViewById(R.id.BT_vermasCard);
         }
     }
 
@@ -65,7 +68,7 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        ReporteCardView item = items.get(position);
+        final ReporteCardView item = items.get(position);
         holder.itemView.setTag(item);
 
         //Asignacion UI
@@ -85,6 +88,16 @@ public class AdaptadorReportes extends RecyclerView.Adapter<AdaptadorReportes.Vi
                 .load(item.ImagenCard)
                 .centerCrop()
                 .into(holder.ivPhoto);
+
+        holder.btVerMas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(contexto, "Reporte: " + item.AsuntoCard, Toast.LENGTH_SHORT).show();
+                Intent fullView = new Intent(contexto, ReporteFullView.class);
+                fullView.putExtra("Reporte", item);
+                contexto.startActivity(fullView);
+            }
+        });
     }
 
     @Override

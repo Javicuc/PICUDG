@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1086786227003",
+    "firebase_url": "https://picudg-509b9.firebaseio.com",
+    "project_id": "picudg-509b9",
+    "storage_bucket": "picudg-509b9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086786227003:android:4110bacf39c84ce9",
+        "android_client_info": {
+          "package_name": "com.picudg.catapp.picudg"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1086786227003-n0gkeo575ef8qseptfn6nke5p02t9c6u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.picudg.catapp.picudg",
+            "certificate_hash": "E0EDE9227B9945C3F01683AD5D80B222E06D301D"
+          }
+        },
+        {
+          "client_id": "1086786227003-au99ee5e0q1o5j3jr82qhmjkehl64903.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGmCatgHhxsz_WVqfhTFBKKhWPlVYTAQw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1086786227003-au99ee5e0q1o5j3jr82qhmjkehl64903.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

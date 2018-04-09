@@ -124,6 +124,9 @@ public class Login extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+
+        printKeyHash();
+
         //getApplicationContext().deleteDatabase("PICUDG.db");
         if(!doesDatabaseExist(this,"PICUDG.db"))
             new LoadBD(getApplicationContext()).execute();
@@ -345,5 +348,21 @@ public class Login extends AppCompatActivity{
         File dbFile = context.getDatabasePath(dbName);
         Log.d("Pathdb -> ",dbFile.toString());
         return dbFile.exists();
+    }
+
+    private void printKeyHash() {
+        // Add code to print out the key hash
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo("YOUR PACKAGE NAME", PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                Log.d("KeyHash:", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e("KeyHash:", e.toString());
+        } catch (NoSuchAlgorithmException e) {
+            Log.e("KeyHash:", e.toString());
+        }
     }
 }

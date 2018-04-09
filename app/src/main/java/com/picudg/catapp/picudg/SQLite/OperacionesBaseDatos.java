@@ -586,7 +586,7 @@ public final class OperacionesBaseDatos {
         while(!c.isAfterLast()){
             DatabaseUtils.dumpCursor(c);
             ReporteCardView reporte = new ReporteCardView(c.getString(c.getColumnIndex("Titulo")),nombreCentro,
-                    c.getString(c.getColumnIndex("Descripcion")),c.getString(c.getColumnIndex("Ubicacion")),
+                    c.getString(c.getColumnIndex("Ubicacion")),c.getString(c.getColumnIndex("Descripcion")),
                     c.getString(c.getColumnIndex("Imagen")),c.getString(c.getColumnIndex("Nombre")),c.getString(c.getColumnIndex("Fecha")));
             list.add(reporte);
             c.moveToNext();
