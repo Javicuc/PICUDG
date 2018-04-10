@@ -173,13 +173,20 @@ public class PicMain extends AppCompatActivity
     }
     private void startActReporte() {
         if (myRequestPermission()) {
-            if (comprobarUsuario()) {
-                Intent actReporte = new Intent(PicMain.this, FormEmail.class);
-                actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivity(actReporte);
-            } else {
-                llenarUsuario();
+            myUbication(); // Actualizamos ubicacion
+            if(acronimoCentro != null){
+                if (comprobarUsuario()) {
+                    Intent actReporte = new Intent(PicMain.this, FormEmail.class);
+                    actReporte.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    actReporte.setFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                    startActivity(actReporte);
+                } else {
+                    llenarUsuario();
+                }
+            } else{
+                Snackbar snackbar = Snackbar
+                        .make(RL_Main, "¡Necesitas estar dentro de tu Centro de Estudios!", Snackbar.LENGTH_LONG);
+                snackbar.show();
             }
         }
     }
@@ -232,8 +239,6 @@ public class PicMain extends AppCompatActivity
 
                 datos.getDb().close();
                 c.close();
-            }else{
-                llenarUsuario();
             }
         }else{
             startLogin();
@@ -406,6 +411,8 @@ public class PicMain extends AppCompatActivity
         PointInPoly inPoly = new PointInPoly();
         List<Pair> listpolyscentros = config.getListPolysCentros();
         List<Polygon> listCentros = config.getListPoligonosCentros();
+        /** Comprueba si el usuario en su coordenada actual
+         * esta dentro de un centro de estudio **/
         for(int i = 0; i < listCentros.size(); i++) {
             if (inPoly.pointInPolygon(mLatLongActual, listCentros.get(i))) {
                 acronimoCentro = (String) listpolyscentros.get(i).second;
